@@ -2000,9 +2000,7 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
 {
     int i, j, n, m;
 
-    //qDebug() << "que tos\n";
-
-
+   
     unsigned int **screen;
 
     screen = new unsigned int*[d_hor_street];

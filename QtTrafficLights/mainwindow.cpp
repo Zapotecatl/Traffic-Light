@@ -1972,7 +1972,7 @@ void MainWindow::PaintCity()
     if (inicio == 1){
 
 
-        qi_city->fill(Qt::red);
+        qi_city->fill(Qt::black);
 
         imgpaint = QPixmap::fromImage(*qi_city);
         QPainter paint(&imgpaint);

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QLabel>
+#include <QXmlStreamReader>
 
 #include <QPainter>
 #include <QPaintDevice>
@@ -12,30 +13,14 @@
 #include <QTime>
 #include <QtGui>
 
+
 #include <QSize>
 
 using namespace std;
 
-
-
 namespace Ui {
     class MainWindow;
 }
-
-
-class MyLabel : public QLabel
-{
-    Q_OBJECT
-
-public:
-    MyLabel(QWidget *parent = 0);
-    virtual ~MyLabel();
-    int var_x;
-    int var_y;
-
-signals:
-        void clicked();
-};
 
 class MainWindow : public QMainWindow
 {
@@ -47,32 +32,39 @@ public:
 
     QLabel *labelCity;
     QTimer *t_timer;
-
     QImage *qi_city;
     QPixmap imgpaint;
     QPen p;
     QPixmap img_scaled;
     QSize size_s;
 
-
+    QString str_info;
 
     int resolution_w;
     int resolution_h;
+    int key;
+
+    int **tmp_screen;
+    int **screen;
 
 private:
     Ui::MainWindow *ui;
+    QXmlStreamReader m_xmlReader;
+
+private:
+
+    void readScene(QString filename);
+    void processReadXML(QByteArray data);
+    void PrintStreetCity(QPainter *paint, QPen &p);
 
 private slots:
 
-
       void on_Experiment_clicked();
-      void on_NameMethod_itemSelectionChanged();
-
       void on_pBInicia_clicked();
       void PaintCity();
-      void PrintStreetCity(QPainter *paint, QPen &p);
 
-
+protected:
+    void keyPressEvent(QKeyEvent* event);
 
 };
 

@@ -699,7 +699,7 @@ void rule1(int n, int m)
 void TrafficLightSelfOrganizing(int n, int m)
 {
 
-#if 0
+#if 1
 
     h_traffic_light_so[n][m].changed = false;
     v_traffic_light_so[m][n].changed = false;

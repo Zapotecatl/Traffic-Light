@@ -69,6 +69,11 @@ struct STrafficSelfOrganizing {
 
     int position;
     int pos_intersection;
+
+
+   // bool r7;
+
+
 };
 
 extern STrafficLight **h_traffic_light;
@@ -86,6 +91,7 @@ extern int *v_regionTraffic_lightSO[2];
 extern float P; //Duration of a green light, i.e. half a period (T/2). To avoid stopping of vehicels, set this equal to half the length of the street or equal to a factor of half the length of the street.
 extern float T;
 extern int metodo_light;
+
 
 /////////////////////////////////////////////////
 
@@ -111,9 +117,19 @@ int GetValueTrafficLightSO(char type_street, int n, int m);
 int GetPositionIntersectionTrafficLightSO(char type_street, int n, int m);
 int GetPositionTrafficLightSO(char type_street, int n, int m);
 void RestoreSingleGreen(char type_street, int n, int m);
+void setSingleRed(char type_street, int n, int m);
 
 void TrafficLightGreenWave(int n, int m);
 void TrafficLightSelfOrganizing(int n, int m);
+bool rule6(int n, int m);
+bool rule5(int n, int m);
+bool rule4(int n, int m);
+bool rule3(int n, int m);
+bool rule2(int n, int m);
+void rule1(int n, int m);
+
+void testRules(int n, int m);
+//void OptimizedTrafficLightSelfOrganizing(int n, int m);
 
 void RunTrafficLight(int n, int m);
 

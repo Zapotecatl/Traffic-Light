@@ -18,13 +18,15 @@ SOURCES += main.cpp\
     traffic_light.cpp \
     vehicle.cpp \
     sensor.cpp \
-    measures.cpp
+    measures.cpp \
+    city.cpp
 
 HEADERS  += mainwindow.h \
     traffic_light.h \
     vehicle.h \
     sensor.h \
-    measures.h
+    measures.h \
+    city.h
 
 FORMS    += mainwindow.ui
 

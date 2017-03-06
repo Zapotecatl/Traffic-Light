@@ -1,11 +1,12 @@
 <welcome>
 	
  <!-- Especificacion -->
- <city n_h_streets = "3" m_v_streets= "3" d_s_block = "16"/>
- <vehicles density_h = "0.35" density_v = "0.35" p_turn = "0.0"/>
- <traffic_lights method = "2" maxim_n = "40" maxim_m = "2" min_time = "10" max_time = "600" P = "25.0"/>
+ <city n_h_streets = "1" m_v_streets= "1" d_s_block = "16"/>
+ <vehicles density_h = "0.25" density_v = "0.4" p_turn = "0.0"/>
+ <traffic_lights method = "2" maxim_n = "40" maxim_m = "2" min_time = "20" max_time = "600000000" P = "25.0"/>
  <sensors method = "1" distance_d = "10" distance_r = "5" distance_e = "2" precision = "1.0"/>
- <experiments n_exp = "1" n_ticks = "5400" size_step = "0.02"/>
+ <experiments n_exp = "50" n_ticks = "5400" size_step = "0.02"/>
+ <rules r1 = "1" r2 = "1" r3 = "1" r4 = "1" r5 = "1" r6 = "1"/>
    
 </welcome>
 

@@ -74,6 +74,300 @@ void freeSensorsTraditional()
 
 }
 
+void regionSensoresTraditional()
+{
+
+    //Create region for each traffic light
+    int k, i, m, n;
+
+    for (k = 0; k < 2; k++){
+
+        for (i = 0; i < d_hor_street; i++)
+            h_regionSensoresT[k][i] = -1;
+
+        for (i = 0; i < d_ver_street; i++)
+            v_regionSensoresT[k][i] = -1;
+    }
+
+    int limit_n = n_hor_streets > 1 ? 2 : 1;
+
+    for (n = 0; n < limit_n; n++){
+        for (m = 0; m < m_ver_streets; m++){
+
+            if (h_sensores_t[n][m].direction == 'R') {
+
+                if (m == 0) {
+                    for (i = h_sensores_t[n][m].start; i < d_hor_street; i++)
+                        h_regionSensoresT[n][i] = m;
+
+                    for (i = 0; i <= h_sensores_t[n][m].end; i++)
+                        h_regionSensoresT[n][i] = m;
+                }
+                else {
+                    for (i = h_sensores_t[n][m].start; i <= h_sensores_t[n][m].end; i++)
+                        h_regionSensoresT[n][i] = m;
+                }
+            }
+            else {
+
+                if (m == 0) {
+
+                    for (i = h_sensores_t[n][m].start; i >= 0; i--)
+                        h_regionSensoresT[n][i] = m;
+
+                    for (i =  d_hor_street - 1; i >= h_sensores_t[n][m].end; i--)
+                        h_regionSensoresT[n][i] = m;
+
+                }
+                else {
+                    for (i = h_sensores_t[n][m].start; i >= h_sensores_t[n][m].end; i--)
+                        h_regionSensoresT[n][i] = m;
+                }
+            }
+        }
+    }
+
+    int limit_m = m_ver_streets > 1 ? 2 : 1;
+
+    for (m = 0; m < limit_m; m++) {
+        for (n = 0; n < n_hor_streets; n++) {
+
+            if (v_sensores_t[m][n].direction == 'R') {
+
+                if (n == 0) {
+
+                    for (i = v_sensores_t[m][n].start; i < d_ver_street; i++)
+                        v_regionSensoresT[m][i] = n;
+
+                    for (i = 0; i <= v_sensores_t[m][n].end; i++)
+                        v_regionSensoresT[m][i] = n;
+                }
+                else {
+                    for (i = v_sensores_t[m][n].start; i <= v_sensores_t[m][n].end; i++)
+                        v_regionSensoresT[m][i] = n;
+                }
+            }
+            else {
+
+                if (n == 0) {
+
+                    for (i = v_sensores_t[m][n].start; i >= 0; i--)
+                        v_regionSensoresT[m][i] = n;
+
+
+                    for (i = d_ver_street - 1; i >= v_sensores_t[m][n].end; i--)
+                        v_regionSensoresT[m][i] = n;
+
+                }
+                else {
+                    for (i = v_sensores_t[m][n].start; i >= v_sensores_t[m][n].end; i--)
+                        v_regionSensoresT[m][i] = n;
+                }
+            }
+        }
+    }
+
+
+
+/*
+    for (k = 0; k < 2; k++){
+       for (i = 0; i < d_hor_street; i++)
+            qDebug() << h_regionSensoresT[k][i];
+         qDebug() << endl;
+
+        for (i = 0; i < d_ver_street; i++)
+            qDebug() << v_regionSensoresT[k][i];
+
+        qDebug() << endl;
+
+    }
+    */
+
+}
+
+int GetSensoresTraditional(char type_street, char direction, int x)
+{
+
+    int value = -1; //-1 significa que no esta en un area de sensado
+
+    if (type_street == 'H') {
+
+        if (direction == 'R')
+            value = h_regionSensoresT[0][x];
+        else
+            value = h_regionSensoresT[1][x];
+    }
+    else {
+
+        if (direction == 'R')
+            value = v_regionSensoresT[0][x];
+        else
+            value = v_regionSensoresT[1][x];
+    }
+
+    return value;
+
+}
+
+
+void SensingSelfOrganizing(int n, int m)
+{
+    int x;
+    char direction;
+    int value;
+
+    int pos_t;
+    int distance_e;
+    int distance_d;
+    int distance_r;
+
+    //Horizontales ///////////////////////////////////////////////////////////////////////////
+    h_traffic_light_so[n][m].n_vehicles = 0;
+    h_traffic_light_so[n][m].m_vehicles = 0;
+
+    direction = (n % 2) == 0 ? 'R' : 'L';
+
+    pos_t = h_sensores_t[n][m].position;
+
+    distance_d = h_sensores_t[n][m].distance_d;
+    distance_r = h_sensores_t[n][m].distance_r;
+    distance_e = h_sensores_t[n][m].distance_e;
+
+    h_traffic_light_so[n][m].vehicle_stop = VehiclesStoppedDistance_e('H', n, m, distance_e);
+
+
+    if (direction == 'R'){
+
+        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
+            //Regla 1 y 3
+            if (GetVisibleCellStreet('H', n, x) == true)
+                value = GetValueCellStreet('H', n, x);
+            else
+                value = 0;
+
+            h_traffic_light_so[n][m].n_vehicles+=value;
+
+            if (x > pos_t - distance_r)
+                h_traffic_light_so[n][m].m_vehicles+= value;
+        }
+
+        h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
+
+    }
+    else{
+
+        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
+            //Regla 1 y 3
+
+            if (GetVisibleCellStreet('H', n, x) == true)
+                value = GetValueCellStreet('H', n, x);
+            else
+                value = 0;
+
+            h_traffic_light_so[n][m].n_vehicles+=value;
+
+            if (x <= pos_t + distance_r)
+                h_traffic_light_so[n][m].m_vehicles+= value;
+        }
+
+        h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
+    }
+
+    //Verticales ///////////////////////////////////////////////////////////////////////////
+
+    v_traffic_light_so[m][n].n_vehicles = 0;
+    v_traffic_light_so[m][n].m_vehicles = 0;
+
+    direction = (m % 2) == 0 ? 'R' : 'L';
+
+    pos_t = v_sensores_t[m][n].position;
+
+    distance_d = v_sensores_t[m][n].distance_d;
+    distance_r = v_sensores_t[m][n].distance_r;
+    distance_e = v_sensores_t[m][n].distance_e;
+
+    v_traffic_light_so[m][n].vehicle_stop = VehiclesStoppedDistance_e('V', n, m, distance_e);
+
+    if (direction == 'R'){
+
+        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
+            //Regla 1 y 3
+
+            if (GetVisibleCellStreet('V', m, x) == true)
+                value = GetValueCellStreet('V', m, x);
+            else
+                value = 0;
+
+            v_traffic_light_so[m][n].n_vehicles+=value;
+
+            if (x > pos_t - distance_r)
+                v_traffic_light_so[m][n].m_vehicles+= value;
+        }
+        v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
+    }
+    else{
+
+        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
+            //Regla 1 y 3
+
+            if (GetVisibleCellStreet('V', m, x) == true)
+                value = GetValueCellStreet('V', m, x);
+            else
+                value = 0;
+
+            v_traffic_light_so[m][n].n_vehicles+=value;
+
+            if (x <= pos_t + distance_r)
+                v_traffic_light_so[m][n].m_vehicles+= value;
+        }
+        v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
+    }
+}
+
+
+bool determineVisible(char type_street, char direction, int x, bool prev_visible)
+{
+
+    bool visible = false;
+    int pos_t;
+
+    if (metodo_sensado == 1) {
+
+        pos_t = GetSensoresTraditional(type_street, direction, x);
+
+        if (pos_t == -1) {//no esta en zona de sensado por lo que el estado por omision es true
+            visible = true;
+        }
+        else if (prev_visible != false) {
+
+            if (frand() <= precision_sensor)
+                visible = true;
+        }
+    }
+    else {
+
+        pos_t = GetSensoresRegion(type_street, direction, x);
+
+        if (pos_t == -1) //no esta en zona de sensado por lo que el estado por omision es true
+            visible = true;
+        else if (prev_visible != false) {
+
+            if (frand() <= precision_sensor)
+                visible = true;
+        }
+    }
+
+   // qDebug() << new_visible;// << precision_sensor;
+
+    return visible;
+
+}
+
+
+
+
+//Deliberative //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int allocateMemorySensors()
 {
     int i, m, n;
@@ -469,8 +763,8 @@ void InializedSensoresTraditional(int distance_d, int distance_r, int distance_e
     if (!(distance_e >= 0 && distance_e <= d_side_block))
         distance_e = d_side_block;
 
-
     allocateMemorySensorsTraditional();
+
 
     for (n = 0; n < n_hor_streets; n++){
         for (m = 0; m < m_ver_streets; m++){
@@ -549,7 +843,6 @@ void InializedSensoresTraditional(int distance_d, int distance_r, int distance_e
     }
 
     regionSensoresTraditional();
-
 
 }
 
@@ -899,140 +1192,7 @@ int PositionFrontSensor(char type_street, int n, int m)
     return s_f;
 }
 
-void regionSensoresTraditional()
-{
 
-    //Create region for each traffic light
-    int k, i, m, n;
-
-    for (k = 0; k < 2; k++){
-
-        for (i = 0; i < d_hor_street; i++)
-            h_regionSensoresT[k][i] = -1;
-
-        for (i = 0; i < d_ver_street; i++)
-            v_regionSensoresT[k][i] = -1;
-    }
-
-    int limit_n = n_hor_streets > 1 ? 2 : 1;
-
-    for (n = 0; n < limit_n; n++){
-        for (m = 0; m < m_ver_streets; m++){
-
-            if (h_sensores_t[n][m].direction == 'R') {
-
-                if (m == 0) {
-                    for (i = h_sensores_t[n][m].start; i < d_hor_street; i++)
-                        h_regionSensoresT[n][i] = m;
-
-                    for (i = 0; i <= h_sensores_t[n][m].end; i++)
-                        h_regionSensoresT[n][i] = m;
-                }
-                else {
-                    for (i = h_sensores_t[n][m].start; i <= h_sensores_t[n][m].end; i++)
-                        h_regionSensoresT[n][i] = m;
-                }
-            }
-            else {
-
-                if (m == 0) {
-
-                    for (i = h_sensores_t[n][m].start; i >= 0; i--)
-                        h_regionSensoresT[n][i] = m;
-
-                    for (i =  d_hor_street - 1; i >= h_sensores_t[n][m].end; i--)
-                        h_regionSensoresT[n][i] = m;
-
-                }
-                else {
-                    for (i = h_sensores_t[n][m].start; i >= h_sensores_t[n][m].end; i--)
-                        h_regionSensoresT[n][i] = m;
-                }
-            }
-        }
-    }
-
-    int limit_m = m_ver_streets > 1 ? 2 : 1;
-
-    for (m = 0; m < limit_m; m++) {
-        for (n = 0; n < n_hor_streets; n++) {
-
-            if (v_sensores_t[m][n].direction == 'R') {
-
-                if (n == 0) {
-
-                    for (i = v_sensores_t[m][n].start; i < d_ver_street; i++)
-                        v_regionSensoresT[m][i] = n;
-
-                    for (i = 0; i <= v_sensores_t[m][n].end; i++)
-                        v_regionSensoresT[m][i] = n;
-                }
-                else {
-                    for (i = v_sensores_t[m][n].start; i <= v_sensores_t[m][n].end; i++)
-                        v_regionSensoresT[m][i] = n;
-                }
-            }
-            else {
-
-                if (n == 0) {
-
-                    for (i = v_sensores_t[m][n].start; i >= 0; i--)
-                        v_regionSensoresT[m][i] = n;
-
-
-                    for (i = d_ver_street - 1; i >= v_sensores_t[m][n].end; i--)
-                        v_regionSensoresT[m][i] = n;
-
-                }
-                else {
-                    for (i = v_sensores_t[m][n].start; i >= v_sensores_t[m][n].end; i--)
-                        v_regionSensoresT[m][i] = n;
-                }
-            }
-        }
-    }
-
-
-
-/*
-    for (k = 0; k < 2; k++){
-       for (i = 0; i < d_hor_street; i++)
-            qDebug() << h_regionSensoresT[k][i];
-         qDebug() << endl;
-
-        for (i = 0; i < d_ver_street; i++)
-            qDebug() << v_regionSensoresT[k][i];
-
-        qDebug() << endl;
-
-    }
-    */
-
-}
-
-int GetSensoresTraditional(char type_street, char direction, int x)
-{
-
-    int value = -1; //-1 significa que no esta en un area de sensado
-
-    if (type_street == 'H') {
-
-        if (direction == 'R')
-            value = h_regionSensoresT[0][x];
-        else
-            value = h_regionSensoresT[1][x];
-    }
-    else {
-
-        if (direction == 'R')
-            value = v_regionSensoresT[0][x];
-        else
-            value = v_regionSensoresT[1][x];
-    }
-
-    return value;
-
-}
 
 void regionSensoresNew()
 {
@@ -1078,9 +1238,7 @@ void regionSensoresNew()
         qDebug() << endl;
 
     }*/
-
 }
-
 
 int GetSensoresRegion(char type_street, int direction, int x)
 {
@@ -1105,271 +1263,6 @@ int GetSensoresRegion(char type_street, int direction, int x)
   return value;
 
 }
-
-bool determineVisible(char type_street, char direction, int x, bool prev_visible)
-{
-
-    bool visible = false;
-    int pos_t;
-
-    if (metodo_sensado == 1) {
-
-        pos_t = GetSensoresTraditional(type_street, direction, x);
-
-        if (pos_t == -1) {//no esta en zona de sensado por lo que el estado por omision es true
-            visible = true;
-        }
-        else if (prev_visible != false) {
-
-            if (frand() <= precision_sensor)
-                visible = true;
-        }
-    }
-    else {
-
-        pos_t = GetSensoresRegion(type_street, direction, x);
-
-        if (pos_t == -1) //no esta en zona de sensado por lo que el estado por omision es true
-            visible = true;
-        else if (prev_visible != false) {
-
-            if (frand() <= precision_sensor)
-                visible = true;
-        }
-    }
-
-   // qDebug() << new_visible;// << precision_sensor;
-
-    return visible;
-
-}
-
-/////////////////////////////////////////////////
-
-void SensingSelfOrganizing(int n, int m)
-{
-    int x;
-    char direction;
-    int value;
-
-    int pos_t;
-    int distance_e;
-    int distance_d;
-    int distance_r;
-
-    //Horizontales ///////////////////////////////////////////////////////////////////////////
-    h_traffic_light_so[n][m].n_vehicles = 0;
-    h_traffic_light_so[n][m].m_vehicles = 0;
-
-    direction = (n % 2) == 0 ? 'R' : 'L';
-
-    pos_t = h_sensores_t[n][m].position;
-
-    distance_d = h_sensores_t[n][m].distance_d;
-    distance_r = h_sensores_t[n][m].distance_r;
-    distance_e = h_sensores_t[n][m].distance_e;
-
-    h_traffic_light_so[n][m].vehicle_stop = VehiclesStoppedDistance_e('H', n, m, distance_e);
-
-    if (direction == 'R'){
-
-        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
-            //Regla 1 y 3
-            if (GetVisibleCellStreet('H', n, x) == true)
-                value = GetValueCellStreet('H', n, x);
-            else
-                value = 0;
-
-            h_traffic_light_so[n][m].n_vehicles+=value;
-
-            if (x > pos_t - distance_r)
-                h_traffic_light_so[n][m].m_vehicles+= value;
-        }
-
-        h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
-    }
-    else{
-
-        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('H', n, x) == true)
-                value = GetValueCellStreet('H', n, x);
-            else
-                value = 0;
-
-            h_traffic_light_so[n][m].n_vehicles+=value;
-
-            if (x <= pos_t + distance_r)
-                h_traffic_light_so[n][m].m_vehicles+= value;
-        }
-
-        h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
-    }
-
-    //Verticales ///////////////////////////////////////////////////////////////////////////
-
-    v_traffic_light_so[m][n].n_vehicles = 0;
-    v_traffic_light_so[m][n].m_vehicles = 0;
-
-    direction = (m % 2) == 0 ? 'R' : 'L';
-
-    pos_t = v_sensores_t[m][n].position;
-
-    distance_d = v_sensores_t[m][n].distance_d;
-    distance_r = v_sensores_t[m][n].distance_r;
-    distance_e = v_sensores_t[m][n].distance_e;
-
-    v_traffic_light_so[m][n].vehicle_stop = VehiclesStoppedDistance_e('V', n, m, distance_e);
-
-    if (direction == 'R'){
-
-        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('V', m, x) == true)
-                value = GetValueCellStreet('V', m, x);
-            else
-                value = 0;
-
-            v_traffic_light_so[m][n].n_vehicles+=value;
-
-            if (x > pos_t - distance_r)
-                v_traffic_light_so[m][n].m_vehicles+= value;
-        }
-        v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
-    }
-    else{
-
-        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('V', m, x) == true)
-                value = GetValueCellStreet('V', m, x);
-            else
-                value = 0;
-
-            v_traffic_light_so[m][n].n_vehicles+=value;
-
-            if (x <= pos_t + distance_r)
-                v_traffic_light_so[m][n].m_vehicles+= value;
-        }
-        v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
-    }
-}
-
-#if 0
-//Prueba solo contando numero de vehiculos sin tener en cuenta el tiempo...
-void SensingSelfOrganizing(int n, int m)
-{
-
-    int x;
-    char direction;
-    int value;
-
-    int pos_t;
-    int distance_e;
-    int distance_d;
-    int distance_r;
-
-
-    //Horizontales ///////////////////////////////////////////////////////////////////////////
-    //h_traffic_light_so[n][m].n_vehicles = 0;
-    h_traffic_light_so[n][m].m_vehicles = 0;
-
-    direction = (n % 2) == 0 ? 'R' : 'L';
-
-    pos_t = h_sensores_t[n][m].position;
-
-    distance_d = h_sensores_t[n][m].distance_d;
-    distance_r = h_sensores_t[n][m].distance_r;
-    distance_e = h_sensores_t[n][m].distance_e;
-
-    h_traffic_light_so[n][m].vehicle_stop = VehiclesStoppedDistance_e('H', n, m, distance_e);
-
-    if (direction == 'R'){
-
-        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('H', n, x) == true)
-                value = GetValueCellStreet('H', n, x);
-            else
-                value = 0;
-
-            h_traffic_light_so[n][m].n_vehicles+= value;
-
-            if (x > pos_t - distance_r)
-                h_traffic_light_so[n][m].m_vehicles+= value;
-        }
-    }
-    else{
-
-        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('H', n, x) == true)
-                value = GetValueCellStreet('H', n, x);
-            else
-                value = 0;
-
-            h_traffic_light_so[n][m].n_vehicles+= value;
-
-            if (x <= pos_t + distance_r)
-                h_traffic_light_so[n][m].m_vehicles+= value;
-        }
-    }
-
-    //Verticales ///////////////////////////////////////////////////////////////////////////
-    //v_traffic_light_so[m][n].n_vehicles = 0;
-    v_traffic_light_so[m][n].m_vehicles = 0;
-
-    direction = (m % 2) == 0 ? 'R' : 'L';
-
-    pos_t = v_sensores_t[m][n].position;
-
-    distance_d = v_sensores_t[m][n].distance_d;
-    distance_r = v_sensores_t[m][n].distance_r;
-    distance_e = v_sensores_t[m][n].distance_e;
-
-    v_traffic_light_so[m][n].vehicle_stop = VehiclesStoppedDistance_e('V', n, m, distance_e);
-
-    if (direction == 'R'){
-
-        for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('V', m, x) == true)
-                value = GetValueCellStreet('V', m, x);
-            else
-                value = 0;
-
-            v_traffic_light_so[m][n].n_vehicles+= value;
-
-            if (x > pos_t - distance_r)
-                v_traffic_light_so[m][n].m_vehicles+= value;
-        }
-    }
-    else{
-
-        for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
-            //Regla 1 y 3
-
-            if (GetVisibleCellStreet('V', m, x) == true)
-                value = GetValueCellStreet('V', m, x);
-            else
-                value = 0;
-
-            v_traffic_light_so[m][n].n_vehicles+= value;
-
-            if (x <= pos_t + distance_r)
-                v_traffic_light_so[m][n].m_vehicles+= value;
-        }
-    }
-}
-
-#endif
-
 
 SResults SimulateVirtualEnvironment(char type_street, int n, int m)
 {

@@ -3,14 +3,18 @@
 #include "vehicle.h"
 
 float velocity;
+float velocity_total;
+
 float flux;
+float flux_total;
+
+int value_intersections;
+float value_intersections_total;
 
 float v_optim;
 float j_optim;
 float j_max = 1.0 / 4.0;
 
-float velocity_total;
-float flux_total;
 
 //Measures////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -70,30 +74,58 @@ void Flux(float density)
     flux_total+= flux;
 }
 
+
+void averageValueIntersections()//Probando por que hay un mayor desempenio en el diagrama fundamental respecto al optimo
+{
+    value_intersections = 0;
+    for (int n = 0; n < n_hor_streets; n++)
+        for (int m = 0; m < m_ver_streets; m++)
+            value_intersections+= pr_intersections[n][m].value;
+
+
+    value_intersections_total+= value_intersections;
+
+}
+
+
 void CalculateSaveMeasures()
 {
 
     save_velocity+= velocity_total / n_ticks;
     save_flux+= flux_total / n_ticks;
+    save_value_intersections+= value_intersections_total / n_ticks;
 }
 
 void SaveMeasures(float density)
 {
     save_velocity = save_velocity / n_exp;
     save_flux = save_flux / n_exp;
+    save_value_intersections = save_value_intersections / n_exp;
 
     //qDebug() << n_exp;
 
     v_optim = vOptima(density);
     j_optim = jOptima(density);
 
-    fprintf(fp_v, "%f,%f\n", density, save_velocity);//con estos datos se grafica el diagrama fundamental del trafico
+    fprintf(fp_v, "%f,%f\n", density, save_velocity);
     fprintf(fp_f, "%f,%f\n", density, save_flux);//con estos datos se grafica el diagrama fundamental del trafico
-
-
+    fprintf(fp_i, "%f,%f\n", density, save_value_intersections);
 
 }
 
+
+
+void SaveMeasuresRules(float density_h, float density_v, int rules, FILE *fv, FILE *ff)
+{
+    save_velocity = save_velocity / n_exp;
+    save_flux = save_flux / n_exp;
+
+    //qDebug() << n_exp;
+    fprintf(fv, "%f,%f,%f,%d\n", density_h, density_v, save_velocity, rules);//con estos datos se grafica el diagrama fundamental del trafico
+    fprintf(ff, "%f,%f,%f,%d\n", density_h, density_v, save_flux, rules);//con estos datos se grafica el diagrama fundamental del trafico
+
+
+}
 
 float vOptima(float density)
 {
@@ -145,8 +177,11 @@ void SaveMeasuresOpt()
     fclose(fp_fopt);
     fclose(fp_vopt);
 
-
-
 }
+
+
+
+
+
 
 

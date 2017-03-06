@@ -20,6 +20,12 @@ float T;
 
 int metodo_light;
 
+bool vehicle_stop_H;
+bool vehicle_stop_V;
+
+//extern bool combination_rules[6];
+
+
 double mod(double number1, double number2)
 {
     return number1 - (floor (number1 / number2)) * number2;
@@ -465,6 +471,7 @@ void InializedTrafficSelfOrganizing(int maxim_n, int maxim_m, int min_time, int 
     for (n = 0; n < n_hor_streets; n++) {
         for (m = 0; m < m_ver_streets; m++) {
 
+
             h_traffic_light_so[n][m].light = 0;
             v_traffic_light_so[m][n].light = 1;
 
@@ -554,87 +561,219 @@ void RunTrafficLight(int n, int m)
             SensingSelfOrganizingSensor(n, m);
 
         TrafficLightSelfOrganizing(n, m);
+
     }
+}
+
+
+
+
+bool rule6(int n, int m)
+{
+
+    if (h_traffic_light_so[n][m].light == 0 && v_traffic_light_so[m][n].light == 0) {
+
+        if (h_traffic_light_so[n][m].vehicle_stop == false) {
+            RestoreSingleGreen('H', n, m);
+            return true;
+        }
+
+        if (v_traffic_light_so[m][n].light == 0)
+            if (v_traffic_light_so[m][n].vehicle_stop == false){
+                RestoreSingleGreen('V', n, m);
+                return true;
+            }
+
+        return false;
+    }
+
+    return true;
+}
+
+
+bool rule5(int n, int m)
+{
+
+    if (h_traffic_light_so[n][m].vehicle_stop == true){
+        setSingleRed('H',n, m);
+        vehicle_stop_H = true;
+    }
+    else
+        vehicle_stop_H = false;
+
+
+    if (v_traffic_light_so[m][n].vehicle_stop == true){
+        setSingleRed('V',n, m);
+        vehicle_stop_V = true;
+    }
+    else
+        vehicle_stop_V = false;
+
+    return true;
+
+}
+
+
+bool rule4(int n, int m)
+{
+
+    if (vehicle_stop_V == false){
+        if (h_traffic_light_so[n][m].light == 1)
+            if (v_traffic_light_so[m][n].n_vehicles >= 1  && h_traffic_light_so[n][m].n_vehicles == 0) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+    }
+
+    if (vehicle_stop_H == false){
+        if (v_traffic_light_so[m][n].light == 1)
+            if (h_traffic_light_so[n][m].n_vehicles >= 1  && v_traffic_light_so[m][n].n_vehicles == 0) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+    }
+
+
+    return true;
+}
+
+bool rule3(int n, int m)
+{
+    if (h_traffic_light_so[n][m].light == 1)
+        if (h_traffic_light_so[n][m].m_vehicles > 0 && h_traffic_light_so[n][m].m_vehicles <= h_traffic_light_so[n][m].maxim_m)
+            return false;
+
+    if (v_traffic_light_so[m][n].light == 1)
+        if (v_traffic_light_so[m][n].m_vehicles > 0 && v_traffic_light_so[m][n].m_vehicles <= v_traffic_light_so[m][n].maxim_m)
+            return false;
+
+    return true;
+}
+
+bool rule2(int n, int m)
+{
+    if (h_traffic_light_so[n][m].light == 1)
+        if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].min_time){
+            if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].max_time) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+            return true;
+        }
+
+    if (v_traffic_light_so[m][n].light == 1)
+        if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].min_time){
+            if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].max_time) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+            return true;
+        }
+
+    return false;
+}
+
+void rule1(int n, int m)
+{
+
+
+
+    if (vehicle_stop_V == false)
+        if (h_traffic_light_so[n][m].light == 1)
+            if (v_traffic_light_so[m][n].n_sum_veh >= v_traffic_light_so[m][n].maxim_n){
+                SwitchTrafficLightSO(n, m);
+                return;//Evita entrar en vertical
+            }
+
+    if (vehicle_stop_H == false) {
+        if (v_traffic_light_so[m][n].light == 1){
+            if (h_traffic_light_so[n][m].n_sum_veh >= h_traffic_light_so[n][m].maxim_n){
+                SwitchTrafficLightSO(n, m);
+                return;
+            }
+        }
+    }
+
 }
 
 void TrafficLightSelfOrganizing(int n, int m)
 {
 
-    //    qDebug() << h_traffic_light_so[n][m].vehicle_stop;
-    //    qDebug() << h_traffic_light_so[n][m].n_vehicles;
-    //    qDebug() << h_traffic_light_so[n][m].m_vehicles;
+#if 0
 
     h_traffic_light_so[n][m].changed = false;
     v_traffic_light_so[m][n].changed = false;
 
+    vehicle_stop_H = false;
+    vehicle_stop_V = false;
+
+    if (rule6(n, m) == true) {
+        if (rule5(n, m) == true) {
+            if (rule4(n, m) == true) {
+                if (rule3(n, m) == true) {
+                    if (rule2(n, m) == true) {
+                        rule1(n, m);
+                    }
+                }
+            }
+        }
+    }
+
     h_traffic_light_so[n][m].time_u++;
     v_traffic_light_so[m][n].time_u++;
 
-    if (h_traffic_light_so[n][m].light == 1){
-
-        if (h_traffic_light_so[n][m].vehicle_stop == true){
-            if (v_traffic_light_so[m][n].vehicle_stop == true)
-                SwitchBothRedTrafficLightSO(n, m); //regla 6
-            else
-                SwitchTrafficLightSO(n, m); // regla 5
-        }
-        else {
-
-            if (v_traffic_light_so[m][n].vehicle_stop == false) {
-
-                if (v_traffic_light_so[m][n].n_vehicles >= 1  && h_traffic_light_so[n][m].n_vehicles == 0) {
-                    SwitchTrafficLightSO(n, m); //regla 4
-                }
-                else if (!(h_traffic_light_so[n][m].m_vehicles > 0 && h_traffic_light_so[n][m].m_vehicles < h_traffic_light_so[n][m].maxim_m)) {
-                    if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].min_time)
-                        if (v_traffic_light_so[m][n].n_sum_veh >= v_traffic_light_so[m][n].maxim_n || v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].max_time) {
-                            //      if (v_traffic_light_so[m][n].n_vehicles >= v_traffic_light_so[m][n].maxim_n) {
-
-                            // qDebug () << "Cambio por cantidad de automoviles H";
-                            SwitchTrafficLightSO(n, m);
-                        }
-                }
-            }
-        }
-    }
-    else if (v_traffic_light_so[m][n].light == 1) {
-
-
-        if (v_traffic_light_so[m][n].vehicle_stop == true) {
-
-            if (h_traffic_light_so[n][m].vehicle_stop == true)
-                SwitchBothRedTrafficLightSO(n, m); //regla 6
-            else
-                SwitchTrafficLightSO(n, m); // regla 5
-        }
-        else {
-
-            if (h_traffic_light_so[n][m].vehicle_stop == false) {
-
-                if (h_traffic_light_so[n][m].n_vehicles >= 1  && v_traffic_light_so[m][n].n_vehicles == 0) {
-                    SwitchTrafficLightSO(n, m); //regla 4
-                }
-                else if (!(v_traffic_light_so[m][n].m_vehicles > 0 && v_traffic_light_so[m][n].m_vehicles < v_traffic_light_so[m][n].maxim_m)) {
-                    if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].min_time)
-                        if (h_traffic_light_so[n][m].n_sum_veh >= h_traffic_light_so[n][m].maxim_n || h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].max_time) {
-                            //    if (h_traffic_light_so[n][m].n_vehicles >= h_traffic_light_so[n][m].maxim_n) {
-
-                            // qDebug () << "Cambio por cantidad de automoviles V";
-                            SwitchTrafficLightSO(n, m);
-                        }
-                }
-            }
-        }
-    }
-    else{ //implicito que ambos estan en rojo
-        if (h_traffic_light_so[n][m].vehicle_stop == false)
-            RestoreSingleGreen('H', n, m);
-        else if (v_traffic_light_so[m][n].vehicle_stop == false)
-            RestoreSingleGreen('V', n, m);
-    }
+#else
+    testRules(n, m);
+#endif
 
 }
 
+void testRules(int n, int m)
+{
+
+    h_traffic_light_so[n][m].changed = false;
+    v_traffic_light_so[m][n].changed = false;
+
+    vehicle_stop_H = false;
+    vehicle_stop_V = false;
+
+    bool chain_value = true;
+
+    if (combination_rules[5] == true){
+        chain_value = rule6(n, m);
+    }
+
+    if (combination_rules[4] == true) {
+        if (chain_value == true)
+            chain_value = rule5(n, m);
+    }
+
+    if (combination_rules[3] == true) {
+        if (chain_value == true)
+            chain_value = rule4(n, m);
+    }
+
+    if (combination_rules[2] == true){
+        if (chain_value == true)
+            chain_value = rule3(n, m);
+    }
+
+    if (combination_rules[1] == true){
+        if (chain_value == true)
+            chain_value = rule2(n, m);
+    }
+
+    if (combination_rules[0] == true){
+        if (chain_value == true) {
+   //         qDebug() << "Rule 1";
+            rule1(n, m);
+        }
+    }
+
+    h_traffic_light_so[n][m].time_u++;
+    v_traffic_light_so[m][n].time_u++;
+
+}
 
 
 int GetRegionTrafficLight(char type_street, int x, int direction)
@@ -709,6 +848,7 @@ void SwitchTrafficLightSO(int n, int m)
         v_traffic_light_so[m][n].light = 0;//Red
 
         h_traffic_light_so[n][m].n_sum_veh = 0;
+        v_traffic_light_so[m][n].n_sum_veh = 0;
 
     }
     else {
@@ -717,6 +857,9 @@ void SwitchTrafficLightSO(int n, int m)
         v_traffic_light_so[m][n].light = 1;//Green
 
         v_traffic_light_so[m][n].n_sum_veh = 0;
+        h_traffic_light_so[n][m].n_sum_veh = 0;
+
+
     }
 
 
@@ -732,7 +875,47 @@ void SwitchBothRedTrafficLightSO(int n, int m)
 
         h_traffic_light_so[n][m].light = 0;//Red
         v_traffic_light_so[m][n].light = 0;//Red
+
+        v_traffic_light_so[m][n].n_sum_veh = 0;
+        h_traffic_light_so[n][m].n_sum_veh = 0;
 }
+
+void setSingleRed(char type_street, int n, int m)
+{
+    if (type_street == 'H'){
+
+        h_traffic_light_so[n][m].time_u = 0;
+        h_traffic_light_so[n][m].light = 0;//Green
+    }
+    else{
+        v_traffic_light_so[m][n].time_u = 0;
+        v_traffic_light_so[m][n].light = 0;//Red
+    }
+}
+
+
+
+void RestoreSingleGreen(char type_street, int n, int m)
+{
+
+    h_traffic_light_so[n][m].time_u = 0;
+    v_traffic_light_so[m][n].time_u = 0;
+
+    if (type_street == 'H'){
+
+        h_traffic_light_so[n][m].light = 1;//Green
+        v_traffic_light_so[m][n].light = 0;//Red
+
+    }
+    else{
+
+        h_traffic_light_so[n][m].light = 0;//Red
+        v_traffic_light_so[m][n].light = 1;//Green
+    }
+}
+
+
+
 
 int GetValueTrafficLightSO(char type_street, int n, int m)
 {
@@ -778,22 +961,95 @@ int GetPositionTrafficLightSO(char type_street, int n, int m)
     return pos;
 }
 
-void RestoreSingleGreen(char type_street, int n, int m)
+
+
+#if 0
+//Probablemente la utilizaré en un futuro, por el momento no es necesaria, es mejor manejar las reglas en forma separada
+void OptimizedTrafficLightSelfOrganizing(int n, int m)
 {
 
-    h_traffic_light_so[n][m].time_u = 0;
-    v_traffic_light_so[m][n].time_u = 0;
+    //    qDebug() << h_traffic_light_so[n][m].vehicle_stop;
+    //    qDebug() << h_traffic_light_so[n][m].n_vehicles;
+    //    qDebug() << h_traffic_light_so[n][m].m_vehicles;
 
-    if (type_street == 'H'){
+    h_traffic_light_so[n][m].changed = false;
+    v_traffic_light_so[m][n].changed = false;
 
-        h_traffic_light_so[n][m].light = 1;//Green
-        v_traffic_light_so[m][n].light = 0;//Red
 
+    if (h_traffic_light_so[n][m].light == 1){
+
+        if (h_traffic_light_so[n][m].vehicle_stop == true){
+            if (v_traffic_light_so[m][n].vehicle_stop == true)
+                SwitchBothRedTrafficLightSO(n, m); //regla 6
+            else
+                SwitchTrafficLightSO(n, m); // regla 5
+        }
+        else {
+
+            if (v_traffic_light_so[m][n].vehicle_stop == false) {
+
+                   if (v_traffic_light_so[m][n].n_vehicles >= 1  && h_traffic_light_so[n][m].n_vehicles == 0) {
+                    SwitchTrafficLightSO(n, m); //regla 4
+
+                }
+                else if (!(h_traffic_light_so[n][m].m_vehicles > 0 && h_traffic_light_so[n][m].m_vehicles <= h_traffic_light_so[n][m].maxim_m))
+                    if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].min_time) {
+
+                        //if (v_traffic_light_so[m][n].n_sum_veh >= v_traffic_light_so[m][n].maxim_n || v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].max_time) {
+                         if (v_traffic_light_so[m][n].n_sum_veh >= v_traffic_light_so[m][n].maxim_n) {
+                           // qDebug () << "Cambio por cantidad de automoviles H";
+                            SwitchTrafficLightSO(n, m);
+                        }
+
+                    }
+
+            }
+        }
     }
-    else{
+    else if (v_traffic_light_so[m][n].light == 1) {
 
-        h_traffic_light_so[n][m].light = 0;//Red
-        v_traffic_light_so[m][n].light = 1;//Green
+
+        if (v_traffic_light_so[m][n].vehicle_stop == true) {
+
+            if (h_traffic_light_so[n][m].vehicle_stop == true)
+                SwitchBothRedTrafficLightSO(n, m); //regla 6
+            else
+                SwitchTrafficLightSO(n, m); // regla 5
+        }
+        else {
+
+            if (h_traffic_light_so[n][m].vehicle_stop == false) {
+
+                if (h_traffic_light_so[n][m].n_vehicles >= 1  && v_traffic_light_so[m][n].n_vehicles == 0) {
+                    SwitchTrafficLightSO(n, m); //regla 4
+                }
+                else if (!(v_traffic_light_so[m][n].m_vehicles > 0 && v_traffic_light_so[m][n].m_vehicles <= v_traffic_light_so[m][n].maxim_m)) {
+                    if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].min_time)
+                        //if (h_traffic_light_so[n][m].n_sum_veh >= h_traffic_light_so[n][m].maxim_n || h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].max_time) {
+                        if (h_traffic_light_so[n][m].n_sum_veh >= h_traffic_light_so[n][m].maxim_n) {
+
+                            // qDebug () << "Cambio por cantidad de automoviles V";
+                            SwitchTrafficLightSO(n, m);
+                        }
+                }
+            }
+        }
     }
+    else{ //implicito que ambos estan en rojo
+        if (h_traffic_light_so[n][m].vehicle_stop == false)
+            RestoreSingleGreen('H', n, m);
+        else if (v_traffic_light_so[m][n].vehicle_stop == false)
+            RestoreSingleGreen('V', n, m);
+    }
+
+
+    h_traffic_light_so[n][m].time_u++;
+    v_traffic_light_so[m][n].time_u++;
+
 }
+
+#endif
+
+
+
 

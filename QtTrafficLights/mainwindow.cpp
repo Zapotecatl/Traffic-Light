@@ -9,11 +9,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "city.h"
 #include "vehicle.h"
 #include "traffic_light.h"
 #include "sensor.h"
 
 #define STEPS 0
+#define TRAFFIC_LIGHTS 1
 #define PRINT 0
 
 int ini = 0;
@@ -122,9 +124,11 @@ void MainWindow::on_pBInicia_clicked()
 
     ini = 1;
 
+
     InializedCity(n_h_streets, m_v_streets, d_s_block, dens_h, dens_v, p_t);
     InializedTrafficLights(met, _P, maxim_n, maxim_m, min_time, max_time);
     InializedSensores(metodo_s, precision, distance_d, distance_r, distance_e);
+
 
     //ui->pBInicia->setEnabled(false);
    // ui->Experiment->setEnabled(false);
@@ -231,6 +235,18 @@ void MainWindow::processReadXML(QByteArray data)
                 n_ticks = m_xmlReader.attributes().value("n_ticks").toString().toInt();
                 size_step = m_xmlReader.attributes().value("size_step").toString().toDouble();
 
+                qDebug() << "Que tos !!!! ";
+
+            }
+            else if (m_xmlReader.name() == "rules") {
+
+                combination_rules[0] = (m_xmlReader.attributes().value("r1").toString().toInt() == 1) ? true : false;
+                combination_rules[1] = (m_xmlReader.attributes().value("r2").toString().toInt() == 1) ? true : false;
+                combination_rules[2] = (m_xmlReader.attributes().value("r3").toString().toInt() == 1) ? true : false;
+                combination_rules[3] = (m_xmlReader.attributes().value("r4").toString().toInt() == 1) ? true : false;
+                combination_rules[4] = (m_xmlReader.attributes().value("r5").toString().toInt() == 1) ? true : false;
+                combination_rules[5] = (m_xmlReader.attributes().value("r6").toString().toInt() == 1) ? true : false;
+
             }
         }
 
@@ -245,7 +261,8 @@ void MainWindow::on_Experiment_clicked()
     ui->pBInicia->setEnabled(false);
     ui->Experiment->setEnabled(false);
 
-    mainFunction(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
+    //mainFunction(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
+    mainFunctionRules(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
 
 }
 
@@ -354,7 +371,7 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
     }
 
 //Traffic lights
-#if 1
+#if TRAFFIC_LIGHTS
 
 
     // Traffic Lights; 4 Green and 5 Red

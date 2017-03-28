@@ -643,7 +643,7 @@ bool GetVehiclesStopped(char type_street, int y, int x)
 
     if (GetValueCellStreet(type_street, y, x) == 1) {
 
-        id = GetIDCellStreet(type_street, y, x);
+         id = GetIDCellStreet(type_street, y, x);
 
         if (GetTypeStreetVehicle(id) == type_street)
             if (GetVelocityVehicle(id) == 0)
@@ -834,6 +834,11 @@ void RunSimulationGreenWave(int tick)
         SetPositionVehicle(type_street, y, x, i);
         SetVelocityVehicle(v, i);
         SetDirectionVehicle(direction, i);
+
+        if (frand() < p_turn) {
+          turn(type_street, y, x, v, direction, true, i);
+        }
+
 
         SetValueCellStreet(type_street, y, x, 1, true, i);
 

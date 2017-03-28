@@ -86,6 +86,13 @@ int myrandom (int i)
     return rand() % i;
 }
 
+int myrandomAB (int min, int max)
+{
+    return rand() % (max - min + 1) + min;;
+}
+
+
+
 double frand()
 {
     return (double)rand() / RAND_MAX;

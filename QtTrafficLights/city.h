@@ -145,6 +145,7 @@ extern bool combination_rules[6];
 
 // random generator function:
 int myrandom (int i);
+int myrandomAB (int min, int max);
 double frand();
 void convertBinary(int num, bool *numBin, int size);
 

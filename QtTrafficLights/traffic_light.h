@@ -49,6 +49,9 @@ struct STrafficLight {
 
     int position;
     int pos_intersection;
+
+    char direction;
+    double T_local; //Only for test
 };
 
 struct STrafficSelfOrganizing {
@@ -72,6 +75,17 @@ struct STrafficSelfOrganizing {
 
 
    // bool r7;
+
+    //Zapo
+
+    int red_time;
+    int green_time;
+
+   // float p_density;
+    int theta;
+    int theta_time;
+    int theta_vehicles;
+
 
 
 };
@@ -118,6 +132,15 @@ int GetPositionIntersectionTrafficLightSO(char type_street, int n, int m);
 int GetPositionTrafficLightSO(char type_street, int n, int m);
 void RestoreSingleGreen(char type_street, int n, int m);
 void setSingleRed(char type_street, int n, int m);
+void setSingleGreen(char type_street, int n, int m);
+
+//Nuevo metodo
+void ZapoTrafficLightSelfOrganizing(int n, int m);
+bool Zaporule6(int n, int m);
+void Zaporule1(int n, int m);
+void ZaposetSingleRed(char type_street, int n, int m);
+void ZaposetSingleGreen(char type_street, int n, int m);
+
 
 void TrafficLightGreenWave(int n, int m);
 void TrafficLightSelfOrganizing(int n, int m);

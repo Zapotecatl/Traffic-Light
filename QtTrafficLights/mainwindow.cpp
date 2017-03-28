@@ -235,8 +235,6 @@ void MainWindow::processReadXML(QByteArray data)
                 n_ticks = m_xmlReader.attributes().value("n_ticks").toString().toInt();
                 size_step = m_xmlReader.attributes().value("size_step").toString().toDouble();
 
-                qDebug() << "Que tos !!!! ";
-
             }
             else if (m_xmlReader.name() == "rules") {
 
@@ -261,8 +259,8 @@ void MainWindow::on_Experiment_clicked()
     ui->pBInicia->setEnabled(false);
     ui->Experiment->setEnabled(false);
 
-    //mainFunction(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
-    mainFunctionRules(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
+    mainFunction(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
+    //mainFunctionRules(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
 
 }
 
@@ -360,7 +358,7 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                 id = GetIDCellStreet('V', m, j);
                 if (GetTypeStreetVehicle(id) == 'V') {
                     if (GetVelocityVehicle(id) == 1)
-                        tmp_screen[j][x_h] = 1; //Vehicle
+                        tmp_screen[j][x_h] = -1; //Vehicle
                    else
                         tmp_screen[j][x_h] = 3; //Stop
                 }
@@ -607,12 +605,12 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            /*else if (screen[i][j] == -1){//Vehicle V
+            else if (screen[i][j] == -1){//Vehicle V
 
                 p.setColor(QColor(74,25,44));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
-            }*/
+            }
             else if (screen[i][j] == 3){ //stop
 
                 p.setColor(QColor(255,255,0));

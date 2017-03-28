@@ -247,11 +247,14 @@ void SensingSelfOrganizing(int n, int m)
 
             h_traffic_light_so[n][m].n_vehicles+=value;
 
+
+
             if (x > pos_t - distance_r)
                 h_traffic_light_so[n][m].m_vehicles+= value;
         }
 
         h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
+        h_traffic_light_so[n][m].theta_vehicles = h_traffic_light_so[n][m].n_vehicles;
 
     }
     else{
@@ -271,6 +274,7 @@ void SensingSelfOrganizing(int n, int m)
         }
 
         h_traffic_light_so[n][m].n_sum_veh+= h_traffic_light_so[n][m].n_vehicles;
+        h_traffic_light_so[n][m].theta_vehicles = h_traffic_light_so[n][m].n_vehicles;
     }
 
     //Verticales ///////////////////////////////////////////////////////////////////////////
@@ -304,6 +308,7 @@ void SensingSelfOrganizing(int n, int m)
                 v_traffic_light_so[m][n].m_vehicles+= value;
         }
         v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
+        v_traffic_light_so[m][n].theta_vehicles = v_traffic_light_so[m][n].n_vehicles;
     }
     else{
 
@@ -321,6 +326,7 @@ void SensingSelfOrganizing(int n, int m)
                 v_traffic_light_so[m][n].m_vehicles+= value;
         }
         v_traffic_light_so[m][n].n_sum_veh+= v_traffic_light_so[m][n].n_vehicles;
+        v_traffic_light_so[m][n].theta_vehicles = v_traffic_light_so[m][n].n_vehicles;
     }
 }
 
@@ -473,6 +479,9 @@ void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m)
         h_traffic_light_so[n][m].n_vehicles = package2.n;
         h_traffic_light_so[n][m].m_vehicles = package2.m;
         h_traffic_light_so[n][m].vehicle_stop = package2.stop;
+
+        //Zapo semaforo
+        h_traffic_light_so[n][m].theta_vehicles = h_traffic_light_so[n][m].n_vehicles;
     }
     else {
 
@@ -480,6 +489,8 @@ void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m)
         v_traffic_light_so[m][n].n_vehicles = package2.n;
         v_traffic_light_so[m][n].m_vehicles = package2.m;
         v_traffic_light_so[m][n].vehicle_stop = package2.stop;
+
+        v_traffic_light_so[m][n].theta_vehicles = v_traffic_light_so[m][n].n_vehicles;
 
     }
 
@@ -2287,7 +2298,7 @@ SResults2 countVirtualEnvironment(char type_street, int n, int m)
 
             for (int i = p_d; i <= pos_t; i++) {
 
-               // qDebug() << "tos : " << v_sensores[m][n].pr_street[i].value;
+               // qDebug() << "sensors : " << v_sensores[m][n].pr_street[i].value;
 
                 if (v_sensores[m][n].pr_street[i].value == 1) {
                     results.n++;

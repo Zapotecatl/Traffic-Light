@@ -31,6 +31,18 @@ double mod(double number1, double number2)
     return number1 - (floor (number1 / number2)) * number2;
 }
 
+int roundNearestInteger(double a)
+{
+  int r;
+
+  if (fmod (a, 1.0) > 0.5)
+    r = ceil(a);
+  else
+    r = floor(a);
+
+  return r;
+}
+
 void InializedTrafficLights(int metodo, float _P, int maxim_n, int maxim_m, int min_time, int max_time)
 {
 
@@ -299,24 +311,34 @@ void InializedTrafficLightGreen(float _P)
 
     allocateMemoryTrafficLight();
 
-    P = _P + 1;//Porque en C empieza en cero las posiciones compenso con uno
+    P = _P;// + 1;//Porque en C empieza en cero las posiciones compenso con uno
     T = 2  * P;
+
+    int Limit_P = roundNearestInteger(P); //Para valores decimales de P, ie, 2.5 = 2 o 2.7 = 3
 
     for (n = 0; n < n_hor_streets; n++){
 
         for (m = 0; m < m_ver_streets; m++){
 
+            h_traffic_light[n][m].time = 0;
+            v_traffic_light[m][n].time = 0;
+
             x = m * d_side_block + m;
             y = n * d_side_block + n;
 
-            offset_t = floor(mod(x - y, T / 2.0) + 0.5);
-
-            h_traffic_light[n][m].offset_t = offset_t;
-            v_traffic_light[m][n].offset_t = offset_t;
+            /*
+            T = 2  * P;
+            T = myrandomAB (2, T);
+            Limit_P = roundNearestInteger(T / 2.0); //Para valores decimales de P, ie, 2.5 = 2 o 2.7 = 3
+            h_traffic_light[n][m].T_local = T;
+            v_traffic_light[m][n].T_local = T;*/
 
             //printf("Offset %d: %d\n", m, h_traffic_light[m].offset_t);
 
             if (n % 2 == 0) {
+
+                h_traffic_light[n][m].direction = 'R';
+
                 if (x == 0) {
                     h_traffic_light[n][m].position = d_hor_street - 1;
                     h_traffic_light[n][m].pos_intersection = 0;
@@ -327,11 +349,17 @@ void InializedTrafficLightGreen(float _P)
                 }
             }
             else {
+
+                h_traffic_light[n][m].direction = 'L';
+
                 h_traffic_light[n][m].position = x + 1;
                 h_traffic_light[n][m].pos_intersection = x;
             }
 
             if (m % 2 == 0) {
+
+                v_traffic_light[m][n].direction = 'R';
+
                 if (y == 0){
                     v_traffic_light[m][n].position = d_ver_street - 1;
                     v_traffic_light[m][n].pos_intersection = 0;
@@ -342,26 +370,58 @@ void InializedTrafficLightGreen(float _P)
                 }
             }
             else {
+
+                v_traffic_light[m][n].direction = 'L';
+
                 v_traffic_light[m][n].position = y + 1;
                 v_traffic_light[m][n].pos_intersection = y;
             }
 
-
             if (floor(mod(x - y, T) + 0.5) >= (T / 2.0)) {
 
-                h_traffic_light[n][m].light = 0;//Red
                 v_traffic_light[m][n].light = 1;// Green
 
-                h_traffic_light[n][m].time = P;
-                v_traffic_light[m][n].time = v_traffic_light[m][n].offset_t;
-                //printf("Red Offset %d: %d\n", m, h_traffic_light[n][m].offset_t);
+                if (v_traffic_light[m][n].direction == 'R') {
+
+                    offset_t = floor(mod(x - y, T / 2.0) + 0.5);
+                    v_traffic_light[m][n].offset_t = Limit_P - offset_t;
+                    v_traffic_light[m][n].time = -v_traffic_light[m][n].offset_t;
+
+
+                }
+                else {
+
+                    offset_t = floor(mod(x - y, T / 2.0) + 0.5);
+                    v_traffic_light[m][n].offset_t = offset_t;
+                    v_traffic_light[m][n].time = -v_traffic_light[m][n].offset_t;
+
+                }
+
+                h_traffic_light[n][m].light = 0;//Red
+                h_traffic_light[n][m].time = T / 2.0;
+
+
+                //printf("Red Offset %d: %d\n", m, v_traffic_light[m][n].offset_t);
             }
             else {
                 h_traffic_light[n][m].light = 1;//Green
-                v_traffic_light[m][n].light = 0;//Red
 
-                h_traffic_light[n][m].time = h_traffic_light[n][m].offset_t;
-                v_traffic_light[m][n].time = P;
+                if (h_traffic_light[n][m].direction == 'R') {
+
+                    offset_t = floor(mod(x - y, T / 2.0) + 0.5);
+                    h_traffic_light[n][m].offset_t = offset_t;
+                    h_traffic_light[n][m].time = -h_traffic_light[n][m].offset_t;
+                }
+                else {
+
+                    offset_t = floor(mod(x - y, T / 2.0) + 0.5);
+                    h_traffic_light[n][m].offset_t = Limit_P - offset_t;
+                    h_traffic_light[n][m].time = -h_traffic_light[n][m].offset_t;
+                }
+
+
+                v_traffic_light[m][n].light = 0;//Red
+                v_traffic_light[m][n].time = T / 2.0;
                // printf("Green Offset %d: %d\n", m, h_traffic_light[n][m].offset_t);
             }
         }
@@ -375,6 +435,7 @@ void TrafficLightGreenWave(int n, int m)
 
     if (GetValueTrafficLight('H', n, m) == 1){
 
+        //if (h_traffic_light[n][m].time < (h_traffic_light[n][m].T_local / 2.0))//Only for rendom test
         if (h_traffic_light[n][m].time < P)
             h_traffic_light[n][m].time++;
         else{
@@ -382,6 +443,7 @@ void TrafficLightGreenWave(int n, int m)
         }
     }
     else {
+        //if (v_traffic_light[m][n].time < (v_traffic_light[m][n].T_local / 2.0))//Only for rendom test
         if (v_traffic_light[m][n].time < P)
             v_traffic_light[m][n].time++;
         else{
@@ -508,6 +570,27 @@ void InializedTrafficSelfOrganizing(int maxim_n, int maxim_m, int min_time, int 
             v_traffic_light_so[m][n].maxim_m = maxim_m;
 
 
+            //Zapo//////////////////////////////////////////////////////////////////
+            h_traffic_light_so[n][m].red_time = 0;
+            h_traffic_light_so[n][m].green_time = 0;
+            //h_traffic_light_so[n][m].p_density = 0;
+            h_traffic_light_so[n][m].theta_time = 10;
+            h_traffic_light_so[n][m].theta_vehicles = 0;
+            h_traffic_light_so[n][m].theta = 0;
+
+
+
+            v_traffic_light_so[m][n].red_time = 0;
+            v_traffic_light_so[m][n].green_time = 0;
+            v_traffic_light_so[m][n].theta_time = 10;
+            v_traffic_light_so[m][n].theta_vehicles = 0;
+            //v_traffic_light_so[m][n].p_density = 0;
+            v_traffic_light_so[m][n].theta = 0;
+
+
+            ////////////////////////////////////////////////////
+
+
             x = m * d_side_block + m;
             y = n * d_side_block + n;
 
@@ -561,6 +644,8 @@ void RunTrafficLight(int n, int m)
             SensingSelfOrganizingSensor(n, m);
 
         TrafficLightSelfOrganizing(n, m);
+
+        //ZapoTrafficLightSelfOrganizing(n, m);
 
     }
 }
@@ -696,6 +781,7 @@ void rule1(int n, int m)
 
 }
 
+
 void TrafficLightSelfOrganizing(int n, int m)
 {
 
@@ -706,6 +792,7 @@ void TrafficLightSelfOrganizing(int n, int m)
 
     vehicle_stop_H = false;
     vehicle_stop_V = false;
+
 
     if (rule6(n, m) == true) {
         if (rule5(n, m) == true) {
@@ -842,6 +929,8 @@ void SwitchTrafficLightSO(int n, int m)
     h_traffic_light_so[n][m].time_u = 0;
     v_traffic_light_so[m][n].time_u = 0;
 
+
+
     if (h_traffic_light_so[n][m].light == 0){
 
         h_traffic_light_so[n][m].light = 1;//Green
@@ -849,6 +938,9 @@ void SwitchTrafficLightSO(int n, int m)
 
         h_traffic_light_so[n][m].n_sum_veh = 0;
         v_traffic_light_so[m][n].n_sum_veh = 0;
+
+        //h_traffic_light_so[n][m].theta =  h_traffic_light_so[n][m].p_density *  h_traffic_light_so[n][m].maxim_n;
+        //qDebug() << "H_theta: " << h_traffic_light_so[n][m].theta;
 
     }
     else {
@@ -859,6 +951,8 @@ void SwitchTrafficLightSO(int n, int m)
         v_traffic_light_so[m][n].n_sum_veh = 0;
         h_traffic_light_so[n][m].n_sum_veh = 0;
 
+        //v_traffic_light_so[m][n].theta =  v_traffic_light_so[m][n].p_density *  v_traffic_light_so[m][n].maxim_n;
+        //qDebug() << "V_theta: " << v_traffic_light_so[m][n].theta;
 
     }
 
@@ -885,11 +979,24 @@ void setSingleRed(char type_street, int n, int m)
     if (type_street == 'H'){
 
         h_traffic_light_so[n][m].time_u = 0;
-        h_traffic_light_so[n][m].light = 0;//Green
+        h_traffic_light_so[n][m].light = 0;//Red
     }
     else{
         v_traffic_light_so[m][n].time_u = 0;
         v_traffic_light_so[m][n].light = 0;//Red
+    }
+}
+
+void setSingleGreen(char type_street, int n, int m)
+{
+    if (type_street == 'H'){
+
+        h_traffic_light_so[n][m].time_u = 0;
+        h_traffic_light_so[n][m].light = 1;//Green
+    }
+    else{
+        v_traffic_light_so[m][n].time_u = 0;
+        v_traffic_light_so[m][n].light = 1;//Green
     }
 }
 
@@ -961,6 +1068,145 @@ int GetPositionTrafficLightSO(char type_street, int n, int m)
     return pos;
 }
 
+//Zapotecatl TrafficLight////////////////////////////////////////////////////////////
+
+bool Zaporule6(int n, int m)
+{
+
+    bool stop_h = h_traffic_light_so[n][m].vehicle_stop;
+    bool stop_v = v_traffic_light_so[m][n].vehicle_stop;
+
+    if (stop_h == true && stop_v == true) {
+        ZaposetSingleRed('H',n, m);
+        ZaposetSingleRed('V',n, m);
+        return false;
+    }
+
+    if (stop_h == true) {
+        ZaposetSingleRed('H',n, m);
+        ZaposetSingleGreen('V', n, m);
+        return false;
+    }
+
+    if (stop_v == true) {
+        ZaposetSingleRed('V',n, m);
+        ZaposetSingleGreen('H', n, m);
+        return false;
+    }
+
+    return true;
+
+}
+
+void ZaposetSingleRed(char type_street, int n, int m)
+{
+
+    if (type_street == 'H'){
+
+        if ( h_traffic_light_so[n][m].light == 1)
+            h_traffic_light_so[n][m].red_time = 0;
+
+        h_traffic_light_so[n][m].light = 0;//Red
+    }
+    else{
+
+        if (v_traffic_light_so[m][n].light == 1)
+            v_traffic_light_so[m][n].red_time = 0;
+
+        v_traffic_light_so[m][n].light = 0;//Red
+    }
+}
+
+bool Zaporule2(int n, int m)
+{
+
+    if (h_traffic_light_so[n][m].light == 0 && v_traffic_light_so[m][n].light == 0)
+        if (h_traffic_light_so[n][m].red_time >= v_traffic_light_so[m][n].red_time)
+            ZaposetSingleGreen('H', n, m);
+        else
+            ZaposetSingleGreen('V', n, m);
+
+
+    if (h_traffic_light_so[n][m].light == 1)
+        if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].min_time){
+            if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].max_time) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+            return true;
+        }
+
+    if (v_traffic_light_so[m][n].light == 1)
+        if (v_traffic_light_so[m][n].time_u >= v_traffic_light_so[m][n].min_time){
+            if (h_traffic_light_so[n][m].time_u >= h_traffic_light_so[n][m].max_time) {
+                SwitchTrafficLightSO(n, m);
+                return false;
+            }
+            return true;
+        }
+
+    return false;
+}
+
+
+void Zaporule1(int n, int m)
+{
+
+
+
+    if (h_traffic_light_so[n][m].light == 1){
+
+        h_traffic_light_so[n][m].theta =  h_traffic_light_so[n][m].theta_time *  h_traffic_light_so[n][m].theta_vehicles;// * (h_traffic_light_so[n][m].theta_vehicles);
+        if (v_traffic_light_so[m][n].n_sum_veh >= h_traffic_light_so[n][m].theta){
+            SwitchTrafficLightSO(n, m);
+            return;//Evita entrar en vertical
+        }
+    }
+
+    if (v_traffic_light_so[m][n].light == 1){
+        v_traffic_light_so[m][n].theta =  v_traffic_light_so[m][n].theta_time *  v_traffic_light_so[m][n].theta_vehicles; // * (v_traffic_light_so[m][n].theta_vehicles);
+        if (h_traffic_light_so[n][m].n_sum_veh >= v_traffic_light_so[m][n].theta){
+            SwitchTrafficLightSO(n, m);
+            return;
+        }
+    }
+
+}
+
+void ZaposetSingleGreen(char type_street, int n, int m)
+{
+    if (type_street == 'H'){
+        h_traffic_light_so[n][m].light = 1;//Green
+    }
+    else{
+        v_traffic_light_so[m][n].light = 1;//Green
+    }
+}
+
+
+void ZapoTrafficLightSelfOrganizing(int n, int m)
+{
+
+    h_traffic_light_so[n][m].changed = false;
+    v_traffic_light_so[m][n].changed = false;
+
+
+   // qDebug() << "HP: " << h_traffic_light_so[n][m].p_density << "VP: " << v_traffic_light_so[m][n].p_density;
+   // qDebug() << "HT: " << h_traffic_light_so[n][m].theta << "VT: " << v_traffic_light_so[m][n].theta;
+
+
+    if (Zaporule6(n, m) == true)
+        if (Zaporule2(n, m) == true)
+            Zaporule1(n, m);
+
+    h_traffic_light_so[n][m].red_time++;
+    v_traffic_light_so[m][n].red_time++;
+
+
+    h_traffic_light_so[n][m].time_u++;
+    v_traffic_light_so[m][n].time_u++;
+
+}
 
 
 #if 0

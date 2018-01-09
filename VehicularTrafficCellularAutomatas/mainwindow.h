@@ -13,13 +13,12 @@
 #include <QTime>
 #include <QtGui>
 
-
 #include <QSize>
 
 using namespace std;
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -59,9 +58,9 @@ private:
 
 private slots:
 
-      void on_Experiment_clicked();
-      void on_pBInicia_clicked();
-      void PaintCity();
+    void on_Experiment_clicked();
+    void on_pBInicia_clicked();
+    void PaintCity();
 
 protected:
     void keyPressEvent(QKeyEvent* event);

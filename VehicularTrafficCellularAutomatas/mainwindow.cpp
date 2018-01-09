@@ -9,14 +9,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "utilities.h"
 #include "city.h"
 #include "vehicle.h"
 #include "traffic_light.h"
 #include "sensor.h"
+#include "slot_system.h"
+
+#include "simulation.h"
 
 #define STEPS 0
 #define TRAFFIC_LIGHTS 1
 #define PRINT 0
+#define OFFSET 1
 
 int ini = 0;
 
@@ -25,19 +30,28 @@ int m_v_streets;
 int d_s_block;
 float dens_h;
 float dens_v;
+int _model;
+int _ls;
+int _vmax;
 float p_t;
+float _per_autonomous;
 
-int met;
-float _P;
+int inter_control;
+
 int maxim_n;
 int maxim_m;
 int min_time;
 int max_time;
 
+float _P;
+
+int _N;
+
 int metodo_s;
 int distance_d;
 int distance_r;
 int distance_e;
+int distance_z;
 float precision;
 
 int d_h_street;
@@ -56,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     resolution_h = 600;
 
     labelCity = new QLabel(this);
-    labelCity->setGeometry(200,10,resolution_w,resolution_h);
+    labelCity->setGeometry(10,20,resolution_w,resolution_h);
     labelCity->setStyleSheet("background-color: rgb(0, 0, 0);");
 
     t_timer = new QTimer();
@@ -71,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int length = aux.length();
 
     dir_string.remove(dir_string.length() - length, dir_string.length());
-    dir_string+= "QtTrafficLights/";
+    dir_string+= "VehicularTrafficCellularAutomatas/";
 
     //qDebug() << dir_string;
 
@@ -83,8 +97,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //_T = d_h_street >= d_v_street ? (d_h_street / 2.0) / m_v_streets : (d_v_street / 2.0) / n_h_streets;
     str_info+= "Distancia H: " + QString::number(d_h_street) + "\n" +
-               "Distancia V: " + QString::number(d_h_street) + "\n";
-              // "Tiempo P: " + QString::number(_P) + "\n";
+            "Distancia V: " + QString::number(d_h_street) + "\n";
+    // "Tiempo P: " + QString::number(_P) + "\n";
 
 
     ui->txt_info->setText(str_info);
@@ -104,11 +118,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+
+    FreeSensors();
+    freeSlotSystem();
+    FreeTrafficLights();
+    FreeCity();
+    freeLAI();
+
     for (int i = 0; i < d_v_street; i++)
         delete screen[i];
     delete [] screen;
 
-        for (int i = 0; i < d_v_street; i++)
+    for (int i = 0; i < d_v_street; i++)
         delete tmp_screen[i];
     delete [] tmp_screen;
 
@@ -122,16 +143,16 @@ MainWindow::~MainWindow()
 void MainWindow::on_pBInicia_clicked()
 {
 
+    InitializeVehicularModel(_model, _ls, _vmax, p_t, _per_autonomous);
+    InializedCity(inter_control, n_h_streets, m_v_streets, d_s_block, dens_h, dens_v);
+    InializedTrafficLights(_P, maxim_n, maxim_m, min_time, max_time);
+    InializedSlotSystem(_N);
+    InializedSensors(metodo_s, precision, distance_d, distance_r, distance_e, distance_z);
+
     ini = 1;
 
-
-    InializedCity(n_h_streets, m_v_streets, d_s_block, dens_h, dens_v, p_t);
-    InializedTrafficLights(met, _P, maxim_n, maxim_m, min_time, max_time);
-    InializedSensores(metodo_s, precision, distance_d, distance_r, distance_e);
-
-
     //ui->pBInicia->setEnabled(false);
-   // ui->Experiment->setEnabled(false);
+    // ui->Experiment->setEnabled(false);
 
 }
 
@@ -163,53 +184,74 @@ void MainWindow::processReadXML(QByteArray data)
         if (m_xmlReader.isStartElement()) {
 
             if (m_xmlReader.name() == "welcome") {
-               ;//Unicamente leyo la etiqueta welcome
+                ;//Unicamente leyo la etiqueta welcome
             } else if (m_xmlReader.name() == "city") {
 
+                inter_control = m_xmlReader.attributes().value("intersection_control").toString().toInt();
                 n_h_streets = m_xmlReader.attributes().value("n_h_streets").toString().toInt();
                 m_v_streets = m_xmlReader.attributes().value("m_v_streets").toString().toInt();
+                dens_h = m_xmlReader.attributes().value("density_h").toString().toDouble();
+                dens_v = m_xmlReader.attributes().value("density_v").toString().toDouble();
                 d_s_block = m_xmlReader.attributes().value("d_s_block").toString().toInt();
 
+                QString tmp_met;
 
-                str_info+= "Calles horizontales: " + QString::number(n_h_streets) + "\n" +
-                           "Calles verticales: " + QString::number(m_v_streets) + "\n" +
-                           "Dist. cuadra: " + QString::number(d_s_block) + "\n\n";
+                if (inter_control == 1)
+                    tmp_met = "GREEN WAVE";
+                else if (inter_control == 2)
+                    tmp_met = "SELF-ORGANIZING";
+                else if (inter_control == 3)
+                    tmp_met = "PRESSURE SELF-ORGANIZING";
+                else if (inter_control == 4)
+                    tmp_met = "SLOT FAIR (N = 1) or BATCH (N > 1)";
+                else {
+                    inter_control = 1;
+                    tmp_met = "GREEN WAVE";
+                }
 
+                str_info+= "Control de la interseccion: " + tmp_met + "\n\n" +
+                        "Calles horizontales: " + QString::number(n_h_streets) + "\n" +
+                        "Calles verticales: " + QString::number(m_v_streets) + "\n" +
+                        "Densidad H: " + QString::number(dens_h) + "\n" +
+                        "Densidad V: " + QString::number(dens_v) + "\n" +
+                        "Densidad Tot: " + QString::number((dens_h + dens_v) / 2.0) + "\n" +
+                        "Dist. cuadra: " + QString::number(d_s_block) + "\n\n";
 
             }
             else if (m_xmlReader.name() == "vehicles") {
+                _model = m_xmlReader.attributes().value("model").toString().toDouble();
+                _ls = m_xmlReader.attributes().value("ls").toString().toDouble();
+                _vmax = m_xmlReader.attributes().value("vmax").toString().toDouble();
 
-                dens_h = m_xmlReader.attributes().value("density_h").toString().toDouble();
-                dens_v = m_xmlReader.attributes().value("density_v").toString().toDouble();
+                if (_model == 1)
+                    _vmax = 1;
+
                 p_t = m_xmlReader.attributes().value("p_turn").toString().toDouble();
+                _per_autonomous = m_xmlReader.attributes().value("per_autonomous").toString().toDouble();
 
-                str_info+= "Densidad H: " + QString::number(dens_h) + "\n" +
-                           "Densidad V: " + QString::number(dens_v) + "\n" +
-                           "Densidad Tot: " + QString::number((dens_h + dens_v) / 2.0) + "\n" +
-                           "P. Turn: " + QString::number(p_t) + "\n\n";
-
+                str_info+= "Model: " + QString::number(_model) + "\n" +
+                        "Ls: " + QString::number(_ls) + "\n" +
+                        "Vmax: " + QString::number(_vmax) + "\n" +
+                        "P. Turn: " + QString::number(p_t) + "\n" +
+                        "% autonomous: " + QString::number(_per_autonomous) + "\n\n";
             }
-            else if (m_xmlReader.name() == "traffic_lights") {
+            else if (m_xmlReader.name() == "green_wave") {
 
-                met = m_xmlReader.attributes().value("method").toString().toInt();
                 _P = m_xmlReader.attributes().value("P").toString().toDouble();
+                str_info+= "Green wave, P: " + QString::number(_P) + "\n\n";
+            }
+            else if (m_xmlReader.name() == "self_organizing") {
 
                 maxim_n = m_xmlReader.attributes().value("maxim_n").toString().toInt();
                 maxim_m = m_xmlReader.attributes().value("maxim_m").toString().toInt();
                 min_time = m_xmlReader.attributes().value("min_time").toString().toInt();
                 max_time = m_xmlReader.attributes().value("max_time").toString().toInt();
 
-                QString tmp_met = met == 2 ? "Auto-organizado" : "Green wave";
-
-
-                str_info+= "Método: " + tmp_met + "\n" +
-                           "Máximo n: " + QString::number(maxim_n) + "\n" +
-                           "Máximo m: " + QString::number(maxim_m) + "\n" +
-                           "Tiempo mínimo: " + QString::number(min_time) + "\n" +
-                           "Tiempo máximo: " + QString::number(max_time) + "\n";
-                           "Tiempo P G.W.: " + QString::number(_P) + "\n\n";
-
-
+                str_info+= "Auto organizante:\n";
+                str_info+= "Máximo n:" + QString::number(maxim_n) + "\n" +
+                        "Máximo m: " + QString::number(maxim_m) + "\n" +
+                        "Tiempo mínimo: " + QString::number(min_time) + "\n" +
+                        "Tiempo máximo: " + QString::number(max_time) + "\n\n";
             }
             else if (m_xmlReader.name() == "sensors") {
 
@@ -217,17 +259,26 @@ void MainWindow::processReadXML(QByteArray data)
                 distance_d = m_xmlReader.attributes().value("distance_d").toString().toInt();
                 distance_r = m_xmlReader.attributes().value("distance_r").toString().toInt();
                 distance_e = m_xmlReader.attributes().value("distance_e").toString().toInt();
-                distance_e++; //Mas la interseccion
+                //distance_e++; //Mas la interseccion
+                distance_z = m_xmlReader.attributes().value("distance_z").toString().toInt();
                 precision = m_xmlReader.attributes().value("precision").toString().toDouble();
 
-                QString tmp_met = metodo_s == 2 ? "Deliberativo" : "Reactivo";
+                QString tmp_met = metodo_s == 2 ? "DELIBERATIVE" : "REACTIVE";
 
-                str_info+= "Método: " + tmp_met + "\n" +
-                           "Distancia d: " + QString::number(distance_d) + "\n" +
-                           "Distancia r: " + QString::number(distance_r) + "\n" +
-                           "Distancia e: " + QString::number(distance_e) + "\n" +
-                           "Precision: " + QString::number(precision) + "\n\n";
+                str_info+= "Sensores: " + tmp_met + "\n" +
+                        "Distancia d: " + QString::number(distance_d) + "\n" +
+                        "Distancia r: " + QString::number(distance_r) + "\n" +
+                        "Distancia e: " + QString::number(distance_e) + "\n" +
+                        "Distancia z: " + QString::number(distance_z) + "\n" +
+                        "Precision: " + QString::number(precision) + "\n\n";
 
+            }
+            else if (m_xmlReader.name() == "slot_system") {
+
+                _N = m_xmlReader.attributes().value("N").toString().toInt();
+
+                str_info+= "Slot system:\n";
+                str_info+= "N: " + QString::number(_N) + "\n\n";
             }
             else if (m_xmlReader.name() == "experiments") {
 
@@ -259,8 +310,8 @@ void MainWindow::on_Experiment_clicked()
     ui->pBInicia->setEnabled(false);
     ui->Experiment->setEnabled(false);
 
-    mainFunction(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
-    //mainFunctionRules(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e);
+    RunExperiments(_model, _ls, _vmax, n_h_streets, m_v_streets, d_s_block, p_t, inter_control, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e, distance_z, _per_autonomous, _N);
+    //mainFunctionRules(n_h_streets, m_v_streets, d_s_block, p_t, met, _P, maxim_n, maxim_m, min_time, max_time, metodo_s, precision, distance_d, distance_r, distance_e, distance_z);
 
 }
 
@@ -328,7 +379,7 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
     //Terrain
     for (i = 0; i < d_v_street; i++)
         for (j = 0; j < d_h_street; j++)
-            tmp_screen[i][j] = 6; // terrain
+            tmp_screen[i][j] = TERRAIN; // terrain
 
 
     //Street and vehicles (stop)
@@ -336,13 +387,13 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
         x_v = n * d_s_block + n;
         for (j = 0; j < d_h_street; j++) {
 
-            if (GetValueCellStreet('H', n, j) == 1) {
+            if (GetValueCellStreet('H', n, j) >= 1) {
                 id = GetIDCellStreet('H', n, j);
                 if (GetTypeStreetVehicle(id) == 'H') {
-                    if (GetVelocityVehicle(id) == 1)
+                    if (GetVelocityVehicle(id) >= 1)
                         tmp_screen[x_v][j] = 1; //Vehicle
                     else
-                        tmp_screen[x_v][j] = 3; //Stop
+                        tmp_screen[x_v][j] = STOP; //Stop
                 }
             }
             else
@@ -354,13 +405,13 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
     for (m = 0; m < m_v_streets; m++) { //vertical
         x_h = m * d_s_block + m;
         for (j = 0; j < d_v_street; j++) {
-            if (GetValueCellStreet('V', m, j) == 1) {
+            if (GetValueCellStreet('V', m, j) >= 1) {
                 id = GetIDCellStreet('V', m, j);
                 if (GetTypeStreetVehicle(id) == 'V') {
-                    if (GetVelocityVehicle(id) == 1)
-                        tmp_screen[j][x_h] = -1; //Vehicle
-                   else
-                        tmp_screen[j][x_h] = 3; //Stop
+                    if (GetVelocityVehicle(id) >= 1)
+                        tmp_screen[j][x_h] = 2; //Vehicle
+                    else
+                        tmp_screen[j][x_h] = STOP; //Stop
                 }
             }
             else
@@ -368,32 +419,32 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
         }
     }
 
-//Traffic lights
+    //Traffic lights
 #if TRAFFIC_LIGHTS
 
 
-    // Traffic Lights; 4 Green and 5 Red
-    if (met == 1) {
+    // Traffic Lights
+    if (inter_control == 1) {
 
         for (n = 0; n < n_h_streets; n++){
             x_v = n * d_s_block + n;
             for (m = 0; m < m_v_streets; m++){
                 x_h = m * d_s_block + m;
 
-                tmp_screen[x_v][GetPositionTrafficLight('H', n, m)] = (GetValueTrafficLight('H', n, m) == 1) ? 4 : 5;
-                tmp_screen[GetPositionTrafficLight('V', n, m)][x_h] = (GetValueTrafficLight('V', n, m) == 1) ? 4 : 5;
+                tmp_screen[x_v][GetPositionTrafficLight('H', n, m)] = (GetValueTrafficLight('H', n, m) == 1) ? GREEN : RED;
+                tmp_screen[GetPositionTrafficLight('V', n, m)][x_h] = (GetValueTrafficLight('V', n, m) == 1) ? GREEN : RED;
             }
         }
     }
-    else {
+    else if (inter_control == 2 || inter_control == 3) {
 
         for (n = 0; n < n_h_streets; n++){
             x_v = n * d_s_block + n;
             for (m = 0; m < m_v_streets; m++){
                 x_h = m * d_s_block + m;
 
-                tmp_screen[x_v][GetPositionTrafficLightSO('H', n, m)] = (GetValueTrafficLightSO('H', n, m) == 1) ? 4 : 5;
-                tmp_screen[GetPositionTrafficLightSO('V', n, m)][x_h] = (GetValueTrafficLightSO('V', n, m) == 1) ? 4 : 5;
+                tmp_screen[x_v][GetPositionTrafficLightSO('H', n, m)] = (GetValueTrafficLightSO('H', n, m) == 1) ? GREEN : RED;
+                tmp_screen[GetPositionTrafficLightSO('V', n, m)][x_h] = (GetValueTrafficLightSO('V', n, m) == 1) ? GREEN : RED;
             }
         }
     }
@@ -401,14 +452,13 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
 
 #endif
 
-//Sensores
+    //Sensores
 #if 1
 
-    if (met == 2) {
+    if (inter_control == 2 || inter_control == 3) {
 
         if (metodo_s == 2) {
-
-            //Sensores
+             //Sensores
             for (n = 0; n < n_h_streets; n++){
                 x_v = n * d_s_block + n;
                 for (m = 0; m < m_v_streets; m++){
@@ -417,8 +467,8 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                     //qDebug() << GetPositionTrafficLightSO('H', n, m);
                     //qDebug() << GetValueTrafficLightSO('H', n, m);
 
-                    tmp_screen[x_v + 1][GetPositionSensor('H', n, m)] = 7; //Sensor H
-                    tmp_screen[GetPositionSensor('V', n, m)][x_h + 1] = 7; //sensor V
+                    tmp_screen[x_v + 1][GetPositionSensor('H', n, m)] = SENSOR; //Sensor H
+                    tmp_screen[GetPositionSensor('V', n, m)][x_h + 1] = SENSOR; //sensor V
                 }
             }
 
@@ -436,23 +486,23 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                             if (m == 0) {
                                 if (i < (d_s_block - GetOffsetSensor('H', n, m))) {
 
-                                    if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('H', n, m, i) >= 1) {
                                         int pos = i + GetPositionSensor('H', n, m);
-                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                                 else {
-                                    if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('H', n, m, i) >= 1) {
                                         int pos = i - (d_s_block - (GetOffsetSensor('H', n, m)));
-                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                             }
                             else {
-                                if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                if (GetVirtualCellValue('H', n, m, i) >= 1) {
 
                                     int pos = i + GetPositionSensor('H', n, m);
-                                    tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                    tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                 }
                             }
                         }
@@ -461,22 +511,22 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                             if (m == 0) {
 
                                 if (i < GetOffsetSensor('H', n, m)) {
-                                    if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('H', n, m, i) >= 1) {
                                         int pos = i + (d_h_street - GetOffsetSensor('H', n, m));
-                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                                 else {
-                                    if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('H', n, m, i) >= 1) {
                                         int pos = GetPositionSensor('H', n, m) - d_s_block + i;
-                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                             }
                             else {
-                                if (GetVirtualCellValue('H', n, m, i) == 1) {
+                                if (GetVirtualCellValue('H', n, m, i) >= 1) {
                                     int pos = GetPositionSensor('H', n, m) - d_s_block + i;
-                                    tmp_screen[tmp_x_v][pos] = GetVirtualCellStop('H', n, m, i) == true ? 8 : 8;
+                                    tmp_screen[tmp_x_v][pos] = GetVirtualCellVelocity('H', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                 }
                             }
                         }
@@ -501,23 +551,23 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
 
                                 if (i < (d_s_block - GetOffsetSensor('V', n, m))) {
 
-                                    if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                         int pos = i + GetPositionSensor('V', n, m);
-                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                                 else {
 
-                                    if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                         int pos = i - (d_s_block - (GetOffsetSensor('V', n, m)));
-                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                             }
                             else {
-                                if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                     int pos = i + GetPositionSensor('V', n, m);
-                                    tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                    tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                 }
                             }
                         }
@@ -527,23 +577,23 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
 
                                 if (i < GetOffsetSensor('V', n, m)) {
 
-                                    if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                         int pos = i + (d_v_street - GetOffsetSensor('V', n, m));
-                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                                 else {
 
-                                    if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                    if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                         int pos = GetPositionSensor('V', n, m) - d_s_block + i;
-                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                        tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                     }
                                 }
                             }
                             else {
-                                if (GetVirtualCellValue('V', n, m, i) == 1) {
+                                if (GetVirtualCellValue('V', n, m, i) >= 1) {
                                     int pos = GetPositionSensor('V', n, m) - d_s_block + i;
-                                    tmp_screen[pos][tmp_x_h] = GetVirtualCellStop('V', n, m, i) == true ? 8 : 8;
+                                    tmp_screen[pos][tmp_x_h] = GetVirtualCellVelocity('V', n, m, i) > 0 ? VIRTUAL_VEHICLE : STOP;
                                 }
                             }
                         }
@@ -557,8 +607,12 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
 #endif
 
 
+#if OFFSET
     int offset = d_s_block / 2;
-    //int offset = 0;
+#else
+    int offset = 0;
+#endif
+
     int h = 0;
     int v = 0;
 
@@ -574,19 +628,19 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
     }
 
     // 0 Street
-    // 1 vehicle
-    // 2 Pointer to intersection
-    // 3 stop
-    // 4 Green
-    // 5 Red
-    // 6 Terrain
-    // 7 Sensor
-    // 8 Virtual vehicle
+    // 1 -- ls vehicle
+    // -1 Pointer to intersection
+    // -2 stop
+    // -3 Green
+    // -4 Red
+    // -5 Terrain
+    // -6 Sensor
+    // -7 Virtual vehicle
 
     for (i = 0; i < d_v_street; i++)
         for (j = 0; j < d_h_street; j++) {
 
-            if (screen[i][j] == 6){ //Terrain (more propability)
+            if (screen[i][j] == TERRAIN){ //Terrain (more propability)
 
                 p.setColor(QColor(0,0,0));
                 paint->setPen(p);
@@ -605,45 +659,39 @@ void MainWindow::PrintStreetCity(QPainter *paint, QPen &p)
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            else if (screen[i][j] == -1){//Vehicle V
+            else if (screen[i][j] == 2){//Vehicle V
 
                 p.setColor(QColor(74,25,44));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            else if (screen[i][j] == 3){ //stop
+            else if (screen[i][j] == STOP){ //stop
 
                 p.setColor(QColor(255,255,0));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            /*else if (screen[i][j] == -3){ //stop
-
-                p.setColor(QColor(255,164,32));
-                paint->setPen(p);
-                paint->drawPoint(j, i);
-            }*/
-            else if (screen[i][j] == 4) { //Green
+            else if (screen[i][j] == GREEN) { //Green
 
                 p.setColor(QColor(0,255,0));
-               // p.setColor(QColor(0,255,0));
+                // p.setColor(QColor(0,255,0));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
                 //paint->drawEllipse ( j, i, 2, 2);
             }
-            else if (screen[i][j] == 5){ //Red
+            else if (screen[i][j] == RED){ //Red
 
                 p.setColor(QColor(255,0,0));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            else if (screen[i][j] == 7){ //sensor
+            else if (screen[i][j] == SENSOR){ //sensor
 
                 p.setColor(QColor(255,255,255));
                 paint->setPen(p);
                 paint->drawPoint(j, i);
             }
-            else if (screen[i][j] == 8){//Virtual Vehicle
+            else if (screen[i][j] == VIRTUAL_VEHICLE){//Virtual Vehicle
 
                 p.setColor(QColor(0,255,255));
                 paint->setPen(p);

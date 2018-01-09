@@ -19,14 +19,22 @@ SOURCES += main.cpp\
     vehicle.cpp \
     sensor.cpp \
     measures.cpp \
-    city.cpp
+    city.cpp \
+    slot_system.cpp \
+    simulation.cpp \
+    vehicular_model.cpp \
+    utilities.cpp
 
 HEADERS  += mainwindow.h \
     traffic_light.h \
     vehicle.h \
     sensor.h \
     measures.h \
-    city.h
+    city.h \
+    slot_system.h \
+    simulation.h \
+    vehicular_model.h \
+    utilities.h
 
 FORMS    += mainwindow.ui
 

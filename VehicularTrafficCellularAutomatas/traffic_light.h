@@ -33,6 +33,8 @@ Date: 01/31/2014
 
 #include <QDebug>
 
+#include "utilities.h"
+#include "city.h"
 #include "sensor.h"
 
 using namespace std;
@@ -41,8 +43,7 @@ using namespace std;
 //TRAFFIC LIGHTS
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct STrafficLight {
-
+struct  STraffic{
     int light;//0 Red 1 Green
     int time;
     int offset_t;
@@ -54,8 +55,12 @@ struct STrafficLight {
     double T_local; //Only for test
 };
 
-struct STrafficSelfOrganizing {
+struct STrafficLight {
+    STraffic horizontal;
+    STraffic vertical;
+};
 
+struct  STrafficSO{
     int light;//1.- Green 0.- Red
     bool vehicle_stop;
     bool changed;
@@ -68,14 +73,13 @@ struct STrafficSelfOrganizing {
     int n_vehicles;
     int maxim_n;
     int m_vehicles;
+    int z_vehicles;
     int maxim_m;
 
     int position;
     int pos_intersection;
 
-
    // bool r7;
-
     //Zapo
 
     int red_time;
@@ -86,46 +90,34 @@ struct STrafficSelfOrganizing {
     int theta_time;
     int theta_vehicles;
 
-
-
 };
 
-extern STrafficLight **h_traffic_light;
-extern STrafficLight **v_traffic_light;
+struct STrafficSelfOrganizing {
+ STrafficSO horizontal;
+ STrafficSO vertical;
+};
 
-extern STrafficSelfOrganizing **h_traffic_light_so;
-extern STrafficSelfOrganizing **v_traffic_light_so;
+extern STrafficLight **traffic_light;
+extern STrafficSelfOrganizing **traffic_light_so;
 
-extern int *h_regionTraffic_light[2];
-extern int *v_regionTraffic_light[2];
-
-extern int *h_regionTraffic_lightSO[2];
-extern int *v_regionTraffic_lightSO[2];
+extern int *h_regionIntersection[2];
+extern int *v_regionIntersection[2];
 
 extern float P; //Duration of a green light, i.e. half a period (T/2). To avoid stopping of vehicels, set this equal to half the length of the street or equal to a factor of half the length of the street.
 extern float T;
-extern int metodo_light;
 
 
 /////////////////////////////////////////////////
 
-double mod(double number1, double number2);
-
-void freeTrafficLightSO();
-void regionTrafficLight();
-void regionTrafficLightSO();
-
-void InializedTrafficLights(int metodo, float _P, int maxim_n, int maxim_m, int min_time, int max_time);
+void InializedTrafficLights(float _P, int maxim_n, int maxim_m, int min_time, int max_time);
 void InializedTrafficLightGreen(float _P);
-
 void SwitchTrafficLight(int n, int m);
 int GetValueTrafficLight(char type_street, int n, int m);
 int GetPositionTrafficLight(char type_street, int n, int m);
-void InializedTrafficSelfOrganizing(int maxim_n, int maxim_m, int min_time, int max_time);
+int GetPositionIntersectionTrafficLight(char type_street, int n, int m);
 
+void InializedTrafficSelfOrganizing(int maxim_n, int maxim_m, int min_time, int max_time);
 void SwitchTrafficLightSO(int n, int m);
-int GetRegionTrafficLight(char type_street, int x, int direction);
-int GetRegionTrafficLightSO(char type_street, int x, int direction);
 void SwitchBothRedTrafficLightSO(int n, int m);
 int GetValueTrafficLightSO(char type_street, int n, int m);
 int GetPositionIntersectionTrafficLightSO(char type_street, int n, int m);
@@ -134,15 +126,10 @@ void RestoreSingleGreen(char type_street, int n, int m);
 void setSingleRed(char type_street, int n, int m);
 void setSingleGreen(char type_street, int n, int m);
 
-//Nuevo metodo
-void ZapoTrafficLightSelfOrganizing(int n, int m);
-bool Zaporule6(int n, int m);
-void Zaporule1(int n, int m);
-void ZaposetSingleRed(char type_street, int n, int m);
-void ZaposetSingleGreen(char type_street, int n, int m);
-
-
+//Metodo de Ola verde
 void TrafficLightGreenWave(int n, int m);
+
+//Metodo auto-organizante
 void TrafficLightSelfOrganizing(int n, int m);
 bool rule6(int n, int m);
 bool rule5(int n, int m);
@@ -154,10 +141,19 @@ void rule1(int n, int m);
 void testRules(int n, int m);
 //void OptimizedTrafficLightSelfOrganizing(int n, int m);
 
-void RunTrafficLight(int n, int m);
+//Metodo auto-organizante basado en presion
+void TrafficLightPressureSelfOrganizing(int n, int m);
+bool PressureRule6(int n, int m);
+void PressureRule1(int n, int m);
+void PressureSetSingleRed(char type_street, int n, int m);
+void PressureSetSingleGreen(char type_street, int n, int m);
 
 int allocateMemoryTrafficLight();
 int allocateMemoryTrafficLightSO();
-int freeTrafficLight();
+
+void freeTrafficLight();
+void freeTrafficLightSO();
+void FreeTrafficLights();
+
 
 #endif // TRAFFIC_LIGHT_H

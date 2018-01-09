@@ -1,23 +1,40 @@
-
 #include "measures.h"
-#include "vehicle.h"
 
-float velocity;
+float _velocity;
 float velocity_total;
 
 float flux;
 float flux_total;
 
+int collisions;
+
 int value_intersections;
 float value_intersections_total;
+
+float save_velocity;
+float save_flux;
+float save_value_intersections;
+
+int error_fp = 0;
+int error_fn = 0;
+
+int test_error_fp = 0;
+int test_error_fn = 0;
+
+FILE *fp_f;
+FILE *fp_v;
+FILE *fp_i;
+
+FILE *fp_fopt;
+FILE *fp_vopt;
 
 float v_optim;
 float j_optim;
 float j_max = 1.0 / 4.0;
 
-
 //Measures////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 void Velocity()
 {
 
@@ -38,39 +55,82 @@ void Velocity()
                 cell_changed++;
 
             for (i = 1; i <= d_side_block; i++){
-
                 reposition_cell_h = m * d_side_block + m + i;
-
                 if (pr_horizontal_streets[n][reposition_cell_h].value == 0 && pw_horizontal_streets[n][reposition_cell_h].value == 1)
                     cell_changed++;
-
             }
 
             for (j = 1; j <= d_side_block; j++){
-
                 reposition_cell_v = n * d_side_block + n + j;
-
                 if (pr_vertical_streets[m][reposition_cell_v].value == 0 && pw_vertical_streets[m][reposition_cell_v].value == 1)
                     cell_changed++;
             }
         }
     }
 
-    if (size_vehicles != 0)
-      velocity = ((float) cell_changed / size_vehicles);
+    if (size_vehicles > 0)
+      _velocity = ((float) cell_changed / size_vehicles);
     else
-      velocity = 0;
+      _velocity = 0;
+
+
+    qDebug() << "------------------------------";
+
+    qDebug() << "HT:" << _velocity << size_vehicles << cell_changed;
+    velocity_total+= _velocity;
 
 
 
-    //qDebug() <<  velocity << cell_changed << size_vehicles;
-    velocity_total+= velocity;
+    //int i;
+    int v_total;
+
+    v_total = 0;
+    for (i = 0; i < size_vehicles; i++) {
+        v_total+= pw_vehicles[i].speed;// GetVelocityVehicle(i);
+    }
+
+    //qDebug() << "Measure Size vehicles: " << size_vehicles;
+    if (size_vehicles > 0){
+      _velocity = ((float) v_total / size_vehicles);
+    //  qDebug() << "Velocity: " << velocity;
+    }
+    else
+      _velocity = 0;
+
+    qDebug() << "HV:" <<  _velocity << size_vehicles << v_total;
+    qDebug() << "------------------------------";
+
+
+}
+*/
+
+void Velocity()
+{
+    int i;
+    int v_total;
+
+    v_total = 0;
+    for (i = 0; i < size_vehicles; i++) {
+        v_total+= GetVelocityVehicle(i);
+    }
+
+    //qDebug() << "Measure Size vehicles: " << size_vehicles;
+    if (size_vehicles > 0){
+      _velocity = ((float) v_total / size_vehicles);
+    //  qDebug() << "Velocity: " << velocity;
+    }
+    else
+      _velocity = 0;
+
+    //qDebug() <<  _velocity << size_vehicles;
+    velocity_total+= _velocity;
 }
 
 void Flux(float density)
 {
    // qDebug() << "Flujo" << ((float) density * velocity);
-    flux = ((float) density * velocity);
+    flux = ((float) density * _velocity);
+    //qDebug() <<  flux << density;
     flux_total+= flux;
 }
 
@@ -81,19 +141,14 @@ void averageValueIntersections()//Probando por que hay un mayor desempenio en el
     for (int n = 0; n < n_hor_streets; n++)
         for (int m = 0; m < m_ver_streets; m++)
             value_intersections+= pr_intersections[n][m].value;
-
-
     value_intersections_total+= value_intersections;
-
 }
-
 
 void CalculateSaveMeasures()
 {
-
-    save_velocity+= velocity_total / n_ticks;
-    save_flux+= flux_total / n_ticks;
-    save_value_intersections+= value_intersections_total / n_ticks;
+    save_velocity+= (velocity_total / n_ticks);
+    save_flux+= (flux_total / n_ticks);
+    save_value_intersections+= (value_intersections_total / n_ticks);
 }
 
 void SaveMeasures(float density)
@@ -102,14 +157,12 @@ void SaveMeasures(float density)
     save_flux = save_flux / n_exp;
     save_value_intersections = save_value_intersections / n_exp;
 
-    //qDebug() << n_exp;
-
+    //qDebug() << n_exp << density;
     v_optim = vOptima(density);
     j_optim = jOptima(density);
 
     fprintf(fp_v, "%f,%f\n", density, save_velocity);
     fprintf(fp_f, "%f,%f\n", density, save_flux);//con estos datos se grafica el diagrama fundamental del trafico
-    fprintf(fp_i, "%f,%f\n", density, save_value_intersections);
 
 }
 

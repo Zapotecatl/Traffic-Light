@@ -1,5 +1,5 @@
-#ifndef SENSOR
-#define SENSOR
+#ifndef SENSOR_H
+#define SENSOR_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,33 +10,39 @@
 #include <algorithm>
 #include <vector>
 
+#include "vehicular_model.h"
+#include "vehicle.h"
+#include "traffic_light.h"
+
 using namespace std;
 
 struct SVirtualCell {
-
-    int stop_cell;
+    int velocity;
     int value;
-
 };
 
 struct VirtualVehicle {
-
     int position;
-    int direction;
     int velocity;
+    int id;
+    char direction;
 
 };
 
-struct SSensorTraditional {
+struct STSensor {
+    int position;
+    char direction;
+    int distance_d;
+    int distance_r;
+    int distance_e;
+    int distance_z;
+    int start;
+    int end;
+};
 
-     int position;
-     char direction;
-     int distance_d;
-     int distance_r;
-     int distance_e;
-     int start;
-     int end;
-
+struct STraditionalSensor {
+    STSensor horizontal;
+    STSensor vertical;
 };
 
 struct SSensor {
@@ -46,6 +52,7 @@ struct SSensor {
     int distance_d;
     int distance_r;
     int distance_e;
+    int distance_z;
 
     int state_light;//1 Green 2 Red
     int p_traffic_light;//Posicion del semaforo
@@ -58,6 +65,8 @@ struct SSensor {
     int received;
     int sended;
     int epsilon;
+
+    VirtualVehicle sensed_vehicle;
 
     //Virtual environment ////////////////////
 
@@ -74,6 +83,12 @@ struct SSensor {
 
 };
 
+struct SDeliberativeSensors {
+    SSensor horizontal;
+    SSensor vertical;
+};
+
+
 struct SResults {
 
     bool arrived_sended;
@@ -85,6 +100,7 @@ struct SResults2 {
 
     int n;
     int m;
+    int n_z;
 };
 
 struct Package1 {
@@ -97,6 +113,7 @@ struct Package1 {
 struct Package2 {
     int n;
     int m;
+    int n_z;
     bool stop;
 };
 
@@ -106,11 +123,8 @@ struct Package3 {
     int received;
 };
 
-extern SSensorTraditional **v_sensores_t;
-extern SSensorTraditional **h_sensores_t;
-
-extern SSensor **v_sensores;
-extern SSensor **h_sensores;
+extern STraditionalSensor **t_sensores;
+extern SDeliberativeSensors **d_sensores;
 
 extern int *h_regionSensoresT[2];
 extern int *v_regionSensoresT[2];
@@ -121,31 +135,32 @@ extern int *v_regionSensoresNew[2];
 extern float precison_sensor;
 extern int metodo_sensado;
 
+extern int stopped_distance;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void InializedSensoresTraditional(int distance_d, int distance_r, int distance_e);
-int allocateMemorySensorsTraditional();
-void freeSensorsTraditional();
-void SensingSelfOrganizing(int n, int m);
+void InializedTraditionalSensors(int distance_d, int distance_r, int distance_e, int distance_z);
+void regionTraditionalSensores();
+int allocateTraditionalMemorySensors();
+int GetIndexTraditionalSensors(char type_street, char direction, int x);
+void freeTraditionalSensors();
+void traditionalSensing(int n, int m);
 
-
-
-void InializedSensoresDeliberative(int distance_d, int distance_r, int distance_e);
+void InializedDeliberativeSensors(int distance_d, int distance_r, int distance_e, int distance_z);
+void regionDeliberativeSensores();
+int GetIndexDeliberativeSensors(char type_street, int direction, int x);
+void freeDeliberativeSensors();
+void deliberativeSensing(int n, int m);
 void FillVehicles(int n, int m, int x, int y);
 int GetPositionSensor(char type_street, int n, int m);
 char GetDirectionSensor(char type_street, int n, int m);
 int GetOffsetSensor(char type_street, int n, int m);
 int GetSizeReadSensor(char type_street, int n, int m);
 int GetPositionVirtualVehicleSensor(char type_street, int n, int m, int i);
-int PositionFrontSensor(char type_street, int n, int m);
-void regionSensoresTraditional();
-int GetSensoresTraditional(char type_street, char direction, int x);
-void regionSensoresNew();
-int GetSensoresRegion(char type_street, int direction, int x);
+int IndexFrontSensor(char type_street, int n, int m);
 bool determineVisible(char type_street, char direction, int x, bool prev_visible);
-void freeSensors();
-void SensingSelfOrganizingSensor(int n, int m);
+int PositionFrontSensor(char type_street, int n, int m);
+int OneCellBeforePositionFrontSensor(char type_street, char direction, int n, int m);
 
 Package1 ReceivesMessageFrontCT(char type_street, int n, int m, int tmp);
 void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m);
@@ -158,24 +173,33 @@ SResults2 countVirtualEnvironment(char type_street, int n, int m);
 
 int localVirtualVehiclePosition(char type_street, char direction, int n, int m, int x);
 void SwitchVirtualCellRW(char type_street, int n, int m);
-void SetVirtualCellValue(char type_street, int n, int m, int i, int value);
-void SetVirtualCellStop(char type_street, int n, int m, int i, int vel);
+void SetVirtualVehicleCell(char type_street, char direction, int n, int m, int x, int velocity);
+void SetVirtualCellValue(char type_street, int n, int m, int x, int value);
+void SetVirtualCellVelocity(char type_street, int n, int m, int i, int vel);
 int GetVirtualCellValue(char type_street, int n, int m, int i);
-int GetVirtualCellStop(char type_street, int n, int m, int i);
+int GetVirtualCellVelocity(char type_street, int n, int m, int i);
 bool GetReceivedStopVirtualVehicles(char type_street, char direction, int n, int m);
 bool GetSendedStopVirtualVehicles(char type_street, char direction, int n, int m);
 int GetReceivedSizeVirtualVehicles(char type_street, char direction, int n, int m);
 int GetSendedSizeVirtualVehicles(char type_street, char direction, int n, int m);
 void resetVirtualWrite(char type_street,int n, int m);
-int Virtual_Rule_184(char type_street, char direction, int n, int m, int x);
-int Virtual_Rule_252(char type_street, char direction, int n, int m, int x);
+bool isThereVehicle(char type_street, int y, int x, int n, int m);
+bool isThereVirtualVehicle(char type_street, int n, int m, int x);
+int GetValueTrafficLightDeliberativeSensor(char type_street, int n, int m);
+int GetPositionTrafficLightDeliberativeSensor(char type_street, int n, int m);
+
+int distanceVirtualFrontVehicle(char type_street, char direction, int n, int m, int x, int *velocity);
+int CalculateVirtualVelocity(char type_street, char direction, int n, int m, int x, int v);
+int CalculateVirtualVelocityFrontSensor(char type_street, char direction, int n, int m, int x, int v);
 
 int allocateMemorySensors();
 
+void InializedSensors(int metodo_s, float precision, int distance_d, int distance_r, int distance_e, int distance_z);
+void FreeSensors();
+
+void resetDetectVehicle();
+void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int previous_x, int velocity, int distance_street, int id);
 
 
-
-void InializedSensores(int metodo_s, float precision, int distance_d, int distance_r, int distance_e);
-
-#endif // SENSOR
+#endif // SENSOR_H
 

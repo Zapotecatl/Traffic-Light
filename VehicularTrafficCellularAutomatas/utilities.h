@@ -17,6 +17,10 @@
 
 #define INVALID -1
 
+int minimum(int a, int b);
+int maximum(int a, int b);
+float minimum(float a, float b);
+float maximum(float a, float b);
 // random generator function:
 int myrandom (int i);
 int myrandomAB (int min, int max);

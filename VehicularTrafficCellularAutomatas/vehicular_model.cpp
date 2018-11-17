@@ -107,7 +107,7 @@ void CalculateRa()
     Ra = new float[vmax + 1];
 
     for (i = 0; i < vmax + 1; i++)
-        Ra[i] = min(Rd, R0 + (float)i * ((Rd - R0) / vs));
+        Ra[i] = minimum(Rd, R0 + (float)i * ((Rd - R0) / vs));
 
     /*    printf ("Ra: ");
     for (i = 0; i < vmax + 1; i++)
@@ -242,7 +242,7 @@ int CalculateVelocityLAI(unsigned int dn, int vn, int vp)
 
         if (frand() <= Ra[vn]){ //Acelera
             int tmp_vn = vn + delta_v;
-            vn_new = min(tmp_vn, vmax);
+            vn_new = minimum(tmp_vn, vmax);
         }
         else
             vn_new = vn;
@@ -251,7 +251,7 @@ int CalculateVelocityLAI(unsigned int dn, int vn, int vp)
     else if (dn < acc[vn][vp] && dn >= keep[vn][vp]){//Random slowing //|| vn == vmax
         if (frand() <= Rs){
             int tmp_vn = vn - delta_v;
-            vn_new = max(tmp_vn, 0);
+            vn_new = maximum(tmp_vn, 0);
         }
         else
             vn_new = vn;
@@ -259,11 +259,11 @@ int CalculateVelocityLAI(unsigned int dn, int vn, int vp)
     }
     else if (dn < keep[vn][vp] && dn >= dec0[vn][vp] && vn > 0){//breaking
         int tmp_vn = vn - delta_v;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
     else if (dn < dec0[vn][vp] && vn > 0){//emergency breaking
         int tmp_vn = vn - M;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
 
     return vn_new;
@@ -277,7 +277,7 @@ int CalculateVelocityLightLAI(unsigned int dn, int vn)
     if (dn >= acc[vn][0]){
         if (frand() <= Ra[vn]){ //Acelera
             int tmp_vn = vn + delta_v;
-            vn_new = min(tmp_vn, vmax);
+            vn_new = minimum(tmp_vn, vmax);
         }
         else
             vn_new = vn;
@@ -286,7 +286,7 @@ int CalculateVelocityLightLAI(unsigned int dn, int vn)
     else if ((dn < acc[vn][0] && dn >= keep[vn][0])){//Random slowing //|| vn == vmax
         if (frand() <= Rs){
             int tmp_vn = vn - delta_v;
-            vn_new = max(tmp_vn, 0);
+            vn_new = maximum(tmp_vn, 0);
         }
         else
             vn_new = vn;
@@ -294,15 +294,15 @@ int CalculateVelocityLightLAI(unsigned int dn, int vn)
     }
     else if (dn < keep[vn][0] && dn >= dec0[vn][0] && vn > 0){//breaking
         int tmp_vn = vn - delta_v;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
     else if (dn < dec0[vn][0] && dn >= dbreak[vn] && vn > 0){//emergency breaking
 
         int tmp_vn = vn - M;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
 
     }
-    else if (dn < dbreak[vn]){ //Predice qu no puede detenerse antes del semaforo
+    else if (dn < dbreak[vn]){ //Predice que no puede detenerse antes del semaforo
         vn_new = vn; // continua con la misma velocidad para pasarse el amarillo o rojo
 
         //qDebug() << "Aqui se lo pasa" << vn << endl;
@@ -323,7 +323,7 @@ int CalculateVelocityAutonomousLAI(unsigned int dn, int vn, int vp)
     if (dn >= acc[vn][vp]){
         //Siempre acelera
         int tmp_vn = vn + delta_v;
-        vn_new = min(tmp_vn, vmax);
+        vn_new = minimum(tmp_vn, vmax);
     }
     else if (dn < acc[vn][vp] && dn >= keep[vn][vp] ){//Random slowing
         //Mantiene velocidad y nunca sobre frena
@@ -331,11 +331,11 @@ int CalculateVelocityAutonomousLAI(unsigned int dn, int vn, int vp)
     }
     else if (dn < keep[vn][vp] && dn >= dec0[vn][vp] && vn > 0){//breaking
         int tmp_vn = vn - delta_v;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
     else if (dn < dec0[vn][vp] && vn > 0){//emergency breaking
         int tmp_vn = vn - M;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
 
     return vn_new;
@@ -350,7 +350,7 @@ int CalculateVelocityAutonomousLightLAI(unsigned int dn, int vn)
     if (dn >= acc[vn][0]){
         //siempre Acelera
         int tmp_vn = vn + delta_v;
-        vn_new = min(tmp_vn, vmax);
+        vn_new = minimum(tmp_vn, vmax);
 
     }
     else if (dn < acc[vn][0] && dn >= keep[vn][0] ){//Random slowing
@@ -359,12 +359,12 @@ int CalculateVelocityAutonomousLightLAI(unsigned int dn, int vn)
     }
     else if (dn < keep[vn][0] && dn >= dec0[vn][0] && vn > 0){//breaking
         int tmp_vn = vn - delta_v;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
     }
     else if (dn < dec0[vn][0] && dn >= dbreak[vn] && vn > 0){//emergency breaking
 
         int tmp_vn = vn - M;
-        vn_new = max(tmp_vn, 0);
+        vn_new = maximum(tmp_vn, 0);
 
     }
     else if (dn < dbreak[vn]){ //Predice que no puede detenerse antes del semaforo

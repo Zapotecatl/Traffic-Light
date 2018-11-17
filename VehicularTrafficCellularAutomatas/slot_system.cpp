@@ -7,55 +7,74 @@ SSlotBasedSystem **slot_system;
 
 int calculateT1()
 {
-    int T1;
-    //184 ACE
-    if (model == 1) {
-        T1 = 1;
-    }
-    else {//LAI AC
-        T1 = 1;
-    }
+    int T1 = 1;
     return T1;
 }
 
-int calculateT2(int vel)
+int calculateT2()
 {
-    int T2;
-    //184 ACE
-    if (model == 1) {
-        T2 = ls;
+    int T2 = 0;
+
+    if (model == 1) {//184 ACE
+        float v_asterisk = minimum(vmax, sqrt(2 * 1 * (ls + 1)));
+        if (v_asterisk > 0)
+            T2 = ceil((v_asterisk / (2.0 * 1)) + ((ls + 1.0) / v_asterisk));
+        else
+            qDebug() << "ERROR T2, v_asterisk: " << v_asterisk;
+
+        // qDebug() << "v*: " << v_asterisk  << "T2: " << T2;
     }
     else {//LAI AC
-
-        //T2 = 1;
-        if (M > 0 && vel >= M)
-            T2 = (vel - M) / M + ls;
+        float t_res = 0.0;
+        float v_asterisk = minimum(vmax, sqrt(2 * M * (ls + 1)));
+        if (v_asterisk > 0)
+            T2 = ceil(t_res + (v_asterisk / (2.0 * M)) + ((ls + 1.0) / v_asterisk));
         else
-            T2 = ls;
+            qDebug() << "ERROR T2, v_asterisk: " << v_asterisk;
+
+        //qDebug() << "v*: " << v_asterisk  << "T2: " << T2;
     }
+
+    // T2 = 1;
+
     return T2;
 }
 
-int calculateATV(int vel, int position_1, int position_2, char dir, int distance_street)
+int calculateATV(int id, int position_intersection, char dir, int distance_street, int atv1)
 {
     int ATV;
 
-
-
     //184 ACE
     if (model == 1) {
-        ATV = calculateDistance(position_1, position_2, dir, distance_street) + 1;
+        ATV = calculateDistance(GetVehicle(id).position.x, position_intersection, dir, distance_street) + 1;
     }
     else {//LAI AC
 
-        ATV = calculateDistance(position_1, position_2, dir, distance_street) + 1;
-        /*
-        if (vel > 1)
-            ATV = ceil((float)(calculateDistance(position_1, position_2, dir, distance_street) + 1.0) / (float)vel);
+        int vel2;
+        int distance2;
+        int atv2;
+        int vx2;
+
+        atv2 = 0;
+        vx2 = 0;
+
+        vel2 = GetVehicle(id).speed;
+        distance2 = calculateDistance(GetVehicle(id).position.x, position_intersection, dir, distance_street) + 1;
+        vx2 =  minimum(vmax , (int) ceil(sqrt(vel2 * vel2 + (2.0 * delta_v * distance2))));//Para el caso donde LAI solo acelera se puede considerar como aceleracion constate
+
+        if ((vel2 + vx2) > 0)
+            atv2 = (int) ceil((float) distance2 / ((float)(vel2 + vx2) / 2.0));
         else
-            ATV = calculateDistance(position_1, position_2, dir, distance_street) + 1;
-            */
+            atv2 = 0;
+
+        int T1 = 1;
+        ATV = maximum(atv2, atv1 + T1);
+
+        if (atv1 > ATV)
+            qDebug() << "Atv: " << atv1 << atv2;
+
     }
+
 
     return ATV;
 }
@@ -70,26 +89,20 @@ void InializedSlotSystem(int N)
     for (n = 0; n < n_hor_streets; n++){
         for (m = 0; m < m_ver_streets; m++){
 
-            slot_system[n][m].t_res = 0.5;
             slot_system[n][m].tl = 0;
             slot_system[n][m].Tsep = 0;
             slot_system[n][m].N = N;//N = 1 es FAIR, N > 1 es BATCH
             slot_system[n][m].dl = 'H';
             slot_system[n][m].occupancy_id = INVALID;
 
-            slot_system[n][m].T1 = calculateT1();//1;//ceil(slot_system[n][m].t_res + 0.5);
-            slot_system[n][m].T2 = calculateT2(0);//ceil(slot_system[n][m].t_res + (v / (2 * a_brake)) + ((l + s) / v));
+            slot_system[n][m].T1 = calculateT1();//1;//
+            slot_system[n][m].T2 = calculateT2();//ceil((v / (2 * a_brake)) + ((l + s) / v));
 
             slot_system[n][m].batch.clear();
             slot_system[n][m].ordered_list.clear();
-            slot_system[n][m].list_H.clear();
-            slot_system[n][m].list_V.clear();
 
-            slot_system[n][m].slot_last_h.id = INVALID;
-            slot_system[n][m].slot_last_v.id = INVALID;
-
-            slot_system[n][m].vehicle_stop_H = false;
-            slot_system[n][m].vehicle_stop_V = false;
+            slot_system[n][m].id_slot_last_h = INVALID;
+            slot_system[n][m].id_slot_last_v = INVALID;
 
             slot_system[n][m].state = 0; //0.-Sin bloqueos 3.- Ambos bloqueados 2.- Bloqueado en H 1.- Bloqueado en V
 
@@ -162,6 +175,18 @@ int GetValueSlotBasedSystem(char type_street, int n, int m, int id)
 
     int state_light = GetOccupancyIdSlotSystem(n, m) == id ? 1 : 0;
 
+
+
+
+
+    /*
+    if (type_street == 'H')
+        return 1;
+    else
+        return 0;*/
+
+
+
     return state_light;
 }
 
@@ -173,65 +198,59 @@ void slotBasedSystem(int n, int m)
     std::list<SSlot>::iterator it;
     SSlot slot;
 
-    bool vehicle_stop_H, vehicle_stop_V;
-
-    vehicle_stop_H = VehiclesStoppedDistance_e('H', n, m, stopped_distance);
-    vehicle_stop_V = VehiclesStoppedDistance_e('V', n, m, stopped_distance);
-    slot_system[n][m].state = 0;//Sin bloqueos
-
-    //qDebug() << "Que pues" << vehicle_stop_H << vehicle_stop_V << rand();
-
-    if (vehicle_stop_H == true && vehicle_stop_V == true) {
-        slot_system[n][m].state = 3; //Bloqueo en ambos sentidos
-        slot_system[n][m].vehicle_stop_H = vehicle_stop_H;
-        slot_system[n][m].vehicle_stop_V = vehicle_stop_V;
+    if (slot_rule_e(n, m) < 0)
         return;
-    }
-    else if(vehicle_stop_H == true) {
-        slot_system[n][m].state = 2; //Bloqueo en H
-        slot_system[n][m].vehicle_stop_H = vehicle_stop_H;
-        slot_system[n][m].vehicle_stop_V = vehicle_stop_V;
-        return;
-    }
-    else if(vehicle_stop_V == true) {
-        slot_system[n][m].state = 1; //Bloqueo en V
-        slot_system[n][m].vehicle_stop_H = vehicle_stop_H;
-        slot_system[n][m].vehicle_stop_V = vehicle_stop_V;
-        return;
+
+    insertSlotsList(n, m);
+
+
+
+    /*
+    it = slot_system[n][m].ordered_list.begin();
+    while (it != slot_system[n][m].ordered_list.end()) {
+        if (isIDStillValid(n, m, (*it).id) == false) {
+            it = slot_system[n][m].ordered_list.erase(it); // alternatively, items.erase(it++);
+        }
+        //else {
+          //  break;
+        //}
+
+        it++;
+    }*/
+
+    /*
+    if (slot_system[n][m].ordered_list.empty() != true) {
+        if (isIDStillValid(n, m, slot_system[n][m].ordered_list.front().id) == false)
+            slot_system[n][m].ordered_list.pop_front();
     }
 
-    //Reiniciar?
-    if (slot_system[n][m].vehicle_stop_H == true || slot_system[n][m].vehicle_stop_V == true){
-        slot_system[n][m].T1 = calculateT1();
-        slot_system[n][m].T2 = calculateT2(0);//TODO que pasa con el 0?
-        slot_system[n][m].batch.clear();
-        slot_system[n][m].ordered_list.clear();
-        slot_system[n][m].list_H.clear();
-        slot_system[n][m].list_V.clear();
-        slot_system[n][m].slot_last_h.id = INVALID;
-        slot_system[n][m].slot_last_v.id = INVALID;
-        slot_system[n][m].vehicle_stop_H = false;
-        slot_system[n][m].vehicle_stop_V = false;
+
+    if (n == 1 && m == 1) {
+        //printBatch(n, m);
+        //calculateOrderedList(n, m);
+        updateAtv(n, m);
+        printList(n, m);
     }
+*/
+
 
 #if 1
 
-    insertSlotsList(n, m);
-    calculateOrderedList(n, m);
-
     if (slot_system[n][m].ordered_list.empty() != true) {
-
         if (slot_system[n][m].batch.empty() == true) {
+
+            calculateOrderedList(n, m);
+
+            //printList(n, m);
+
             slot = slot_system[n][m].ordered_list.front();
 
             if (slot.type_street == slot_system[n][m].dl)
                 slot_system[n][m].Tsep = slot_system[n][m].T1;
-            else {
-                slot_system[n][m].T2 = calculateT2(GetVehicle(slot.id).speed);
+            else
                 slot_system[n][m].Tsep = slot_system[n][m].T2;
-            }
 
-            slot_system[n][m].tl = max(slot_system[n][m].Tsep + slot_system[n][m].tl, slot.atv);
+            slot_system[n][m].tl = maximum(slot_system[n][m].Tsep + slot_system[n][m].tl, slot.atv);
 
             batch_H.clear();
             batch_V.clear();
@@ -307,83 +326,167 @@ void slotBasedSystem(int n, int m)
                 }
             }
             //slot_system[n][m].batch.sort(compare_tv);//No es necesario
-
             slot_system[n][m].tl = slot_system[n][m].batch.back().tv;
             slot_system[n][m].dl = slot_system[n][m].batch.back().type_street;
         }
     }
 
-    int d_street, number_intersections;
-    int pos_inter_x;
-    int id_vehicle;
-    int x;
 
+    //pensandolo detenidamente porque verificar todos?
     it = slot_system[n][m].batch.begin();
     while (it != slot_system[n][m].batch.end()) {
-        id_vehicle = (*it).id;
-        SVehicle vehicle = GetVehicle(id_vehicle);
-        x = vehicle.position.x;
-
-        if (vehicle.type_street == 'H') {
-            d_street = d_hor_street;
-            number_intersections = m_ver_streets;
-            pos_inter_x = slot_system[n][m].pos_intersection_h;
+        if (isIDStillValid(n, m, (*it).id) == false) {
+            it = slot_system[n][m].batch.erase(it); // alternatively, items.erase(it++);
         }
-        else {
-            d_street = d_ver_street;
-            number_intersections = n_hor_streets;
-            pos_inter_x = slot_system[n][m].pos_intersection_v;
-        }
-
-        if (number_intersections > 1) {//Evitar el caso donde la entrada es lo mismo que la salida (condiciones periodicas en la frontera)
-            bool pop = false;
-            if (vehicle.direction == 'R') {//direccion derecha
-                if (pos_inter_x == 0) {
-                    if (x > pos_inter_x && x < (d_street - d_side_block))
-                        pop = true;
-                } else {
-                    if (x > pos_inter_x)
-                        pop = true;
-                }
-            }
-            else if (vehicle.direction == 'L') {//direccion izquierda
-                if (pos_inter_x == 0) {
-                    if (x < d_street && x >= (d_street - d_side_block))
-                        pop = true;
-                } else {
-                    if (x < pos_inter_x)
-                        pop = true;
-                }
-            }
-
-            if (pop == true) {
-                it = slot_system[n][m].batch.erase(it); // alternatively, items.erase(it++);
-
-            }
-            else {
-                break;
-            }
-        }
+        //else {
+        //  break;
+        //}
+        it++;
     }
+
+    /*
+    if (slot_system[n][m].batch.empty() != true) {
+        if (isIDStillValid(n, m, slot_system[n][m].batch.front().id) == false)
+            slot_system[n][m].batch.pop_front();
+    }*/
 
     slot_system[n][m].occupancy_id = INVALID;
     if (slot_system[n][m].batch.empty() != true) {
         slot_system[n][m].occupancy_id = slot_system[n][m].batch.front().id;
     }
 
-    /*if (n == 0 && m == 0)
-        qDebug() << GetVehicle(slot_system[n][m].occupancy_id).type_street << "ID: "<<slot_system[n][m].occupancy_id << "Pos:" << GetVehicle(slot_system[n][m].occupancy_id).position.x << slot_system[n][m].batch.empty();
-    if (n == 0 && m == 0 && slot_system[n][m].batch.empty() == false) {
-        qDebug() << "*********Batch, n x m: " << n << " " << m << "size: " << slot_system[n][m].batch.size();
-        for (it=slot_system[n][m].batch.begin(); it!=slot_system[n][m].batch.end(); ++it)
-            qDebug() << (*it).type_street << "ID:" << (*it).id << "Tv:" << (*it).tv;
-        qDebug() << "******************************************";
+
+    //bool vehicle_stop_H2 = GetVehiclesStopped('H', n, slot_system[n][m].pos_h);
+    // bool vehicle_stop_V2 = GetVehiclesStopped('V', m, slot_system[n][m].pos_v);
+
+
+
+    /* if (n == 1 && m == 1) {
+        qDebug() << "ID: " << slot_system[n][m].occupancy_id;// << "H: " << GetIDCellStreet('H', n, slot_system[n][m].pos_h) << "V: " << GetIDCellStreet('V', m, slot_system[n][m].pos_v);
+
+        printBatch(n, m);
+        printList(n, m);
     }*/
+
+
+    /*
+    if (vehicle_stop_H2 == true && vehicle_stop_V2 == true) {
+
+
+        if (slot_system[n][m].occupancy_id != GetIDCellStreet('H', n, slot_system[n][m].pos_h) && slot_system[n][m].occupancy_id != GetIDCellStreet('V', m, slot_system[n][m].pos_v)) {
+            qDebug() << "ID: " << slot_system[n][m].occupancy_id << "H: " << GetIDCellStreet('H', n, slot_system[n][m].pos_h) << "V: " << GetIDCellStreet('V', m, slot_system[n][m].pos_v);
+
+            if (slot_system[n][m].occupancy_id != INVALID) {
+
+                qDebug() << "Pos ID: " << slot_system[n][m].occupancy_id << GetVehicle(slot_system[n][m].occupancy_id).position.x << GetVehicle(slot_system[n][m].occupancy_id).type_street;
+
+                printBatch(n, m);
+                printList(n, m);
+
+
+            }
+        }
+    }*/
+
 
 #endif
 
 }
 
+bool isIDStillValid(int n, int m, int id)
+{
+    SVehicle vehicle =  GetVehicle(id);
+    int k_intersection = GetIndexIntersection(vehicle.type_street, vehicle.position.x, vehicle.direction);
+
+    if (vehicle.type_street == 'H') {
+        if (m == k_intersection)
+            return true;
+    }
+    else {
+        if (n == k_intersection)
+            return true;
+    }
+
+    return false;
+
+}
+
+#if 0
+bool isIDStillValid(int n, int m, int id)
+{
+    SVehicle vehicle =  GetVehicle(id);
+    int x = vehicle.position.x;
+
+    int pos_inter_x;
+    int d_street;
+    int number_intersections;
+
+    if (vehicle.type_street == 'H') {
+        d_street = d_hor_street;
+        number_intersections = m_ver_streets;
+        pos_inter_x = slot_system[n][m].pos_intersection_h;
+    }
+    else {
+        d_street = d_ver_street;
+        number_intersections = n_hor_streets;
+        pos_inter_x = slot_system[n][m].pos_intersection_v;
+    }
+
+    if (number_intersections > 1) {//Evitar el caso donde la entrada es lo mismo que la salida (condiciones periodicas en la frontera)
+
+        if (vehicle.direction == 'R') {//direccion derecha
+            if (pos_inter_x == 0) {
+                if (x > pos_inter_x && x < (d_street - d_side_block))
+                    return false;
+            } else {
+                if (x > pos_inter_x)
+                    return false;
+            }
+        }
+        else if (vehicle.direction == 'L') {//direccion izquierda
+            if (pos_inter_x == 0) {
+                if (x < d_street && x >= (d_street - d_side_block))
+                    return false;
+            } else {
+                if (x < pos_inter_x)
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+#endif
+
+
+int slot_rule_e(int n, int m)
+{
+    bool vehicle_stop_H, vehicle_stop_V;
+    vehicle_stop_H = VehiclesStoppedDistance_e('H', n, m, stopped_distance);
+    vehicle_stop_V = VehiclesStoppedDistance_e('V', n, m, stopped_distance);
+
+    //qDebug() << "Que pues" << vehicle_stop_H << vehicle_stop_V << rand();
+
+    slot_system[n][m].state = 0;//Sin bloqueos
+    if (vehicle_stop_H == true && vehicle_stop_V == true)
+        slot_system[n][m].state = 3; //Bloqueo en ambos sentidos
+    else if(vehicle_stop_H == true)
+        slot_system[n][m].state = 2; //Bloqueo en H
+    else if(vehicle_stop_V == true)
+        slot_system[n][m].state = 1; //Bloqueo en V
+
+    if ((vehicle_stop_H == true || vehicle_stop_V == true)){
+        slot_system[n][m].batch.clear();
+        slot_system[n][m].ordered_list.clear();
+        slot_system[n][m].id_slot_last_h = INVALID;
+        slot_system[n][m].id_slot_last_v = INVALID;
+
+        return -1;
+    }
+
+    return 0;
+
+}
 
 void insertSlotsList(int n, int m)
 {
@@ -392,9 +495,22 @@ void insertSlotsList(int n, int m)
     int pos_inter_x;
     int number_intersections;
     int start, end;
-    char type_street_intersection = INVALID;
+
     SSlot slot;
     SVehicle vehicle;
+    std::list<SSlot> list_H;
+    std::list<SSlot> list_V;
+
+    char type_street_intersection = INVALID;
+
+    //slot_system[n][m].id_slot_last_h = INVALID;
+    //slot_system[n][m].id_slot_last_v = INVALID;
+
+    if (slot_system[n][m].id_slot_last_h != INVALID) {
+        if (isIDStillValid(n, m, slot_system[n][m].id_slot_last_h) == false) {
+            slot_system[n][m].id_slot_last_h = INVALID;
+        }
+    }
 
     number_intersections = m_ver_streets;
     if (number_intersections > 1) {//Evitar el caso donde la entrada es lo mismo que la salida (condiciones periodicas en la frontera)
@@ -402,8 +518,8 @@ void insertSlotsList(int n, int m)
         pos_inter_x = slot_system[n][m].pos_intersection_h;
 
         if (slot_system[n][m].direction_h == 'R') {
-            if (slot_system[n][m].slot_last_h.id != INVALID) {
-                vehicle = GetVehicle(slot_system[n][m].slot_last_h.id);
+            if (slot_system[n][m].id_slot_last_h != INVALID) {
+                vehicle = GetVehicle(slot_system[n][m].id_slot_last_h);
                 start = (slot_system[n][m].pos_h - d_side_block) + 1;
                 if (vehicle.position.x == 0)
                     end = d_street - vehicle.rear_position - 1;
@@ -415,22 +531,11 @@ void insertSlotsList(int n, int m)
                 type_street_intersection = 'H';
             }
 
-            for (int pos_x = end; pos_x >= start; pos_x--) {
-                if (GetValueCellStreet('H', n, pos_x) == 1) {
-                    if (GetVisibleCellStreet('H', n, pos_x) == true){
-                        id_vehicle = GetIDCellStreet('H', n, pos_x);
-                        slot.id = id_vehicle;
-                        slot.type_street = 'H';
-                        slot.atv = calculateATV(GetVehicle(id_vehicle).speed, pos_x, pos_inter_x, slot_system[n][m].direction_h, d_street);
-                        slot.tv = 0;
-                        slot_system[n][m].list_H.push_back(slot);
-                    }
-                }
-            }
+            rightInsert('H', n, start, end, pos_inter_x, d_street, list_H);
         }
         else {//direccion izquierda
-            if (slot_system[n][m].slot_last_h.id != INVALID) {
-                vehicle = GetVehicle(slot_system[n][m].slot_last_h.id);
+            if (slot_system[n][m].id_slot_last_h != INVALID) {
+                vehicle = GetVehicle(slot_system[n][m].id_slot_last_h);
                 start = vehicle.rear_position + 1;
                 end = (slot_system[n][m].pos_h + d_side_block) - 1;
             }
@@ -440,19 +545,13 @@ void insertSlotsList(int n, int m)
                 type_street_intersection = 'H';
             }
 
-            for (int pos_x = start; pos_x <= end; pos_x++) {
-                if (GetValueCellStreet('H', n, pos_x) == 1) {
-                    if (GetVisibleCellStreet('H', n, pos_x) == true){
-                        id_vehicle = GetIDCellStreet('H', n, pos_x);
-                        slot.id = id_vehicle;
-                        slot.type_street = 'H';
-                        slot.atv = calculateATV(GetVehicle(id_vehicle).speed, pos_x, pos_inter_x, slot_system[n][m].direction_h, d_street);
-                        slot.tv = 0;
-                        slot_system[n][m].list_H.push_back(slot);
-                    }
-                }
-            }
+            leftInsert('H', n, start, end, pos_inter_x, d_street, list_H);
         }
+    }
+
+    if (slot_system[n][m].id_slot_last_v != INVALID) {
+        if (isIDStillValid(n, m, slot_system[n][m].id_slot_last_v) == false)
+            slot_system[n][m].id_slot_last_v = INVALID;
     }
 
     number_intersections = n_hor_streets;
@@ -460,8 +559,8 @@ void insertSlotsList(int n, int m)
         d_street = d_ver_street;
         pos_inter_x = slot_system[n][m].pos_intersection_v;
         if (slot_system[n][m].direction_v == 'R') {
-            if (slot_system[n][m].slot_last_v.id != INVALID) {
-                vehicle = GetVehicle(slot_system[n][m].slot_last_v.id);
+            if (slot_system[n][m].id_slot_last_v != INVALID) {
+                vehicle = GetVehicle(slot_system[n][m].id_slot_last_v);
                 start = (slot_system[n][m].pos_v - d_side_block) + 1;
                 if (vehicle.position.x == 0)
                     end = d_street - vehicle.rear_position - 1;
@@ -473,22 +572,11 @@ void insertSlotsList(int n, int m)
                 type_street_intersection = 'V';
             }
 
-            for (int pos_x = end; pos_x >= start; pos_x--) {
-                if (GetValueCellStreet('V', m, pos_x) == 1) {
-                    if (GetVisibleCellStreet('V', m, pos_x) == true){
-                        id_vehicle = GetIDCellStreet('V', m, pos_x);
-                        slot.id = id_vehicle;
-                        slot.type_street = 'V';
-                        slot.atv = calculateATV(GetVehicle(id_vehicle).speed, pos_x, pos_inter_x, slot_system[n][m].direction_v, d_street);
-                        slot.tv = 0;
-                        slot_system[n][m].list_V.push_back(slot);
-                    }
-                }
-            }
+            rightInsert('V', m, start, end, pos_inter_x, d_street, list_V);
         }
         else {//direccion izquierda
-            if (slot_system[n][m].slot_last_v.id != INVALID) {
-                vehicle = GetVehicle(slot_system[n][m].slot_last_v.id);
+            if (slot_system[n][m].id_slot_last_v != INVALID) {
+                vehicle = GetVehicle(slot_system[n][m].id_slot_last_v);
                 start = vehicle.rear_position + 1;
                 end = (slot_system[n][m].pos_v + d_side_block) - 1;
             }
@@ -498,21 +586,11 @@ void insertSlotsList(int n, int m)
                 type_street_intersection = 'V';
             }
 
-            for (int pos_x = start; pos_x <= end; pos_x++) {
-                if (GetValueCellStreet('V', m, pos_x) == 1) {
-                    if (GetVisibleCellStreet('V', m, pos_x) == true){
-                        id_vehicle = GetIDCellStreet('V', m, pos_x);
-                        slot.id = id_vehicle;
-                        slot.type_street = 'V';
-                        slot.atv = calculateATV(GetVehicle(id_vehicle).speed, pos_x, pos_inter_x, slot_system[n][m].direction_v, d_street);
-                        slot.tv = 0;
-                        slot_system[n][m].list_V.push_back(slot);
-                    }
-                }
-            }
+            leftInsert('V', m, start, end, pos_inter_x, d_street, list_V);
         }
     }
 
+    //Vehiculo en interseccion
     if (type_street_intersection == 'H') {
         pos_inter_x = slot_system[n][m].pos_intersection_h;
         if (GetValueCellStreet('H', n, pos_inter_x) == 1) {
@@ -523,7 +601,7 @@ void insertSlotsList(int n, int m)
                     slot.type_street = 'H';
                     slot.atv = 0;
                     slot.tv = 0;
-                    slot_system[n][m].list_H.push_front(slot);
+                    list_H.push_front(slot);
                 }
             }
         }
@@ -537,12 +615,62 @@ void insertSlotsList(int n, int m)
                     slot.type_street = 'V';
                     slot.atv = 0;
                     slot.tv = 0;
-                    slot_system[n][m].list_V.push_front(slot);
+                    list_V.push_front(slot);
                 }
             }
         }
     }
 
+
+    if (list_H.empty() != true) {
+        slot_system[n][m].ordered_list.insert(slot_system[n][m].ordered_list.end(), list_H.begin(), list_H.end());
+        slot_system[n][m].id_slot_last_h = list_H.back().id;
+        list_H.clear();
+    }
+
+    if (list_V.empty() != true) {
+        slot_system[n][m].ordered_list.insert(slot_system[n][m].ordered_list.end(), list_V.begin(), list_V.end());
+        slot_system[n][m].id_slot_last_v = list_V.back().id;
+        list_V.clear();
+    }
+
+
+}
+
+void leftInsert(char type_street, int y, int _start, int _end, int _pos_inter_x, int _d_street, std::list<SSlot>& list)
+{
+    SSlot slot;
+
+    for (int pos_x = _start; pos_x <= _end; pos_x++) {
+        if (GetValueCellStreet(type_street, y, pos_x) == 1) {
+            if (GetVisibleCellStreet(type_street, y, pos_x) == true){
+                int id_vehicle = GetIDCellStreet(type_street, y, pos_x);
+                slot.id = id_vehicle;
+                slot.type_street = type_street;
+                slot.atv = 0;//calculateATV(id_vehicle, _pos_inter_x, 'L', _d_street, 0);
+                slot.tv = 0;
+                list.push_back(slot);
+            }
+        }
+    }
+}
+
+void rightInsert(char type_street, int y, int _start, int _end, int _pos_inter_x, int _d_street, std::list<SSlot>& list)
+{
+    SSlot slot;
+
+    for (int pos_x = _end; pos_x >= _start; pos_x--) {
+        if (GetValueCellStreet(type_street, y, pos_x) == 1) {
+            if (GetVisibleCellStreet(type_street, y, pos_x) == true){
+                int id_vehicle = GetIDCellStreet(type_street, y, pos_x);
+                slot.id = id_vehicle;
+                slot.type_street = type_street;
+                slot.atv = 0; //calculateATV(id_vehicle, _pos_inter_x, 'R', _d_street, 0);
+                slot.tv = 0;
+                list.push_back(slot);
+            }
+        }
+    }
 }
 
 void updateAtv(int n, int m)
@@ -551,105 +679,50 @@ void updateAtv(int n, int m)
     int pos_inter_x;
     SVehicle tmp_vehicle;
 
+    int atv_h1;
+    int atv_v1;
+    bool first_h = true;
+    bool first_v = true;
+
+    atv_h1 = 0;
+    atv_v1 = 0;
     std::list<SSlot>::iterator it;
     for (it=slot_system[n][m].ordered_list.begin(); it!=slot_system[n][m].ordered_list.end(); ++it) {
         tmp_vehicle = GetVehicle((*it).id);
         if (tmp_vehicle.type_street == 'H'){
             d_street = d_hor_street;
             pos_inter_x = slot_system[n][m].pos_intersection_h;
+
+            if (first_h == true) {
+                int id_front_vehicle = searchVehicleFrontSameBlockID(tmp_vehicle.id);
+                if (id_front_vehicle != INVALID)
+                    atv_h1 = calculateATV(id_front_vehicle, pos_inter_x, GetVehicle(id_front_vehicle).direction, d_street, 0);//Como el vehiculo frontal esta en el batch y no en la lista, entonces se asume el atv1 a 0
+                first_h = false;
+            }
+
+            (*it).atv = calculateATV(tmp_vehicle.id, pos_inter_x, tmp_vehicle.direction, d_street, atv_h1);
+            atv_h1 = (*it).atv;
         }
         else {
             d_street = d_ver_street;
             pos_inter_x = slot_system[n][m].pos_intersection_v;
+
+            if (first_v == true) {
+                int id_front_vehicle = searchVehicleFrontSameBlockID(tmp_vehicle.id);
+                if (id_front_vehicle != INVALID)
+                    atv_v1 = calculateATV(id_front_vehicle, pos_inter_x, GetVehicle(id_front_vehicle).direction, d_street, 0);//Como el vehiculo frontal esta en el batch y no en la lista, entonces se asume el atv1 a 0
+                first_v = false;
+            }
+
+            (*it).atv = calculateATV(tmp_vehicle.id, pos_inter_x, tmp_vehicle.direction, d_street, atv_v1);
+            atv_v1 = (*it).atv;
         }
-        (*it).atv = calculateATV(tmp_vehicle.speed, tmp_vehicle.position.x, pos_inter_x, tmp_vehicle.direction, d_street);
     }
+
 }
 
 void calculateOrderedList(int n, int m)
 {
-
-    if (slot_system[n][m].list_H.empty() != true) {
-        slot_system[n][m].ordered_list.insert(slot_system[n][m].ordered_list.begin(), slot_system[n][m].list_H.begin(), slot_system[n][m].list_H.end());
-        slot_system[n][m].slot_last_h = slot_system[n][m].list_H.back();
-        slot_system[n][m].list_H.clear();
-    }
-    else {
-        if (slot_system[n][m].slot_last_h.id != INVALID) {
-            SVehicle vehicle =  GetVehicle(slot_system[n][m].slot_last_h.id);
-            int x = vehicle.position.x;
-            int d_street = d_hor_street;
-            int pos_inter_x = slot_system[n][m].pos_intersection_h;
-            bool invalid = false;
-
-            if (vehicle.direction == 'R') {//direccion derecha
-                if (pos_inter_x == 0) {
-                    if (x > pos_inter_x && x < (d_street - d_side_block))
-                        invalid = true;
-                } else {
-                    if (x > pos_inter_x)
-                        invalid = true;
-                }
-            }
-            else if (vehicle.direction == 'L') {//direccion izquierda
-                if (pos_inter_x == 0) {
-                    if (x < d_street && x >= (d_street - d_side_block))
-                        invalid = true;
-                } else {
-                    if (x < pos_inter_x)
-                        invalid = true;
-                }
-            }
-            if (invalid == true) {
-                slot_system[n][m].slot_last_h.id = INVALID;
-                slot_system[n][m].slot_last_h.type_street = INVALID;
-                slot_system[n][m].slot_last_h.atv = INVALID;
-                slot_system[n][m].slot_last_h.tv = INVALID;
-            }
-        }
-    }
-
-    if (slot_system[n][m].list_V.empty() != true) {
-        slot_system[n][m].ordered_list.insert(slot_system[n][m].ordered_list.end(), slot_system[n][m].list_V.begin(), slot_system[n][m].list_V.end());
-        slot_system[n][m].slot_last_v = slot_system[n][m].list_V.back();
-        slot_system[n][m].list_V.clear();
-    }
-    else {
-        if (slot_system[n][m].slot_last_v.id != INVALID) {
-            SVehicle vehicle =  GetVehicle(slot_system[n][m].slot_last_v.id);
-            int x = vehicle.position.x;
-            int d_street = d_ver_street;
-            int pos_inter_x = slot_system[n][m].pos_intersection_v;
-
-            bool invalid = false;
-            if (vehicle.direction == 'R') {//direccion derecha
-                if (pos_inter_x == 0) {
-                    if (x > pos_inter_x && x < (d_street - d_side_block))
-                        invalid = true;
-                } else {
-                    if (x > pos_inter_x)
-                        invalid = true;
-                }
-            }
-            else if (vehicle.direction == 'L') {//direccion izquierda
-                if (pos_inter_x == 0) {
-                    if (x < d_street && x >= (d_street - d_side_block))
-                        invalid = true;
-                } else {
-                    if (x < pos_inter_x)
-                        invalid = true;
-                }
-            }
-
-            if (invalid == true) {
-                slot_system[n][m].slot_last_v.id = INVALID;
-                slot_system[n][m].slot_last_v.type_street = INVALID;
-                slot_system[n][m].slot_last_v.atv = INVALID;
-                slot_system[n][m].slot_last_v.tv = INVALID;
-            }
-        }
-    }
-
     updateAtv(n, m);
     slot_system[n][m].ordered_list.sort(compare_atv);
 }
@@ -695,10 +768,22 @@ void printList(int n, int m)
 
     std::list<SSlot>::iterator it;
     for (it=slot_system[n][m].ordered_list.begin(); it!=slot_system[n][m].ordered_list.end(); ++it)
-        qDebug() << "ORDER LIST ID:" << (*it).id << (*it).type_street << "Atv:" << (*it).atv;
+        qDebug() << "ORDER LIST ID:" << (*it).id << (*it).type_street << "Atv:" << (*it).atv << "Pos:" << GetVehicle((*it).id).position.x;
 
     qDebug() << "******************************************";
 }
+
+void printBatch(int n, int m)
+{
+    qDebug() << "*********BATCH, n x m: " << n << " " << m << "size: " << slot_system[n][m].batch.size();
+
+    std::list<SSlot>::iterator it;
+    for (it=slot_system[n][m].batch.begin(); it!=slot_system[n][m].batch.end(); ++it)
+        qDebug() << "ORDER BATCH ID:" << (*it).id << (*it).type_street << "Atv:" << (*it).atv << "Tv:" << (*it).tv << "Type:" << (*it).type_street;
+
+    qDebug() << "******************************************";
+}
+
 
 void allocateMemorySlotSystem()
 {

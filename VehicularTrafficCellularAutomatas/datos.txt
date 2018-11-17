@@ -1,4 +1,146 @@
 ﻿
+Diferentes Metodos
+
+--No Auto----------------------------------------------------------------------
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+LE <- c("OV", "SAR", "SAIV")
+COL <-c("green", "red", "blue")
+legend(0.75, 0.45, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+
+
+data <- read.csv("01velocity.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Velocidad", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,8.00)))
+par(new = TRUE)
+data <- read.csv("02velocity.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,8.00)))
+par(new = TRUE)
+data <- read.csv("04velocity.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,8.00)))
+LE <- c("OV", "SAR", "SAIV")
+COL <-c("green", "red", "blue")
+legend(0.75, 5.45, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+
+
+--Auto----------------------------------------------------------------------
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(3), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("OV", "SAR", "IBR", "SAIV")
+COL <-c("green", "red", "orange", "blue")
+legend(0.75, 0.65, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+
+
+data <- read.csv("01velocity.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Velocidad", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,9.00)))
+par(new = TRUE)
+data <- read.csv("02velocity.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,9.00)))
+par(new = TRUE)
+data <- read.csv("03velocity.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(3), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,9.00)))
+par(new = TRUE)
+data <- read.csv("04velocity.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,9.00)))
+LE <- c("OV", "SAR", "IBR", "SAIV")
+COL <-c("green", "red", "orange", "blue")
+legend(0.75, 5.45, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+
+_______________________________________________
+
+
+
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(3), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+LE <- c("OV", "SAR", "IBR", "SAIV")
+COL <-c("green", "red", "orange", "blue")
+legend(0.75, 0.45, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+
+
+
+
+
+
+
+
+
+
+
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 cex.axis = 1.5 // Controla el tamanio de los numeros en los ejes
 cex.lab=1.5 // controla el tamanio del testo en los ejes
 lwd=2 // Controla el tamanio de los simbolos
@@ -15,10 +157,10 @@ cex.lab=1.5, cex.axis = 1.5
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-data <- read.csv("measuresflu.csv")
+data <- read.csv("01flux.csv")
 X <- data[, 1]
 Y1 <- data [, 2]
-matplot(X,Y1, type="o", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", ylim = range(c(0,0.3)))
+matplot(X,Y1, type="o", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", ylim = range(c(0,0.7)))
  
  
 data <- read.csv("measuresvel.csv")
@@ -36,69 +178,507 @@ matplot(X,Y1, type="o", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Inters
 
 ------------------------
 
-
-data <- read.csv("measuresflu.csv")
+data <- read.csv("01flux.csv")
 X <- data[, 1]
 Y1 <- data [, 2]
-matplot(X,Y1, type="o", pch=c(1), col=c("green"), xlab = "Densidad", ylab="Flujo", ylim = range(c(0,0.3)))
-LE <- c("Green-wave")
-COL <-c("green")
-legend(0.3, 0.3, LE, cex=1.25, pt.cex = 1, col=COL , pch=c(1), box.lty=0)
+matplot(X,Y1, type="p", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+LE <- c("Otorgar la luz verde a la calle con mayor 
+impulso vehicular")
+COL <-c("blue")
+legend(0.0, 0.7, LE, cex=1.25, pt.cex = 1.5, col=COL , pch=c(1), box.lty=0)
+ 
+
+ 
 
 
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+LE <- c("Otorgar la luz verde a la calle con mayor 
+impulso vehicular y evitar obstruir  la intersección")
+COL <-c("blue")
+legend(0.0, 0.7, LE, cex=1.25, pt.cex = 1.5, col=COL , pch=c(1), box.lty=0)
+ 
+
+ 
+
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+LE <- c("Otorgar la luz verde a la calle con mayor 
+impulso  vehicular, evitar obstruir la intersección y 
+acotar tiempos de espera")
+COL <-c("blue")
+legend(0.0, 0.7, LE, cex=1.25, pt.cex = 1.5, col=COL , pch=c(1), box.lty=0)
+ 
+
+ 
+ 
+ 
+data <- read.csv("02flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("red"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.7)))
+LE <- c("SAR", "SARIV")
+COL <-c("red", "blue")
+legend(0.50, 0.7, LE, cex=1.25, , pt.cex = 1.5, col=COL , pch=c(2,1,3,95), box.lty=0)
+ 
+ 
+ 
+  
+data <- read.csv("02flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("red"), xlab = "Densidad", ylab="Flow", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.6)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,0.6)))
+LE <- c("SAR", "SARIV")
+COL <-c("red", "blue")
+legend(0.15, 0.62, LE, cex=1.25, pt.cex = 1, col=COL , pch=c(2,1), box.lty=0)
+ 
+ 
+ 
+ 
+ 
+
+ 
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(10), col=c("red"), xlab = "Densidad", ylab="Flujo", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,0.7)))
+LE <- c("Manuales", "Autónomos")
+COL <-c("red", "blue")
+legend(0.65, 0.75, LE, cex=1.25, pt.cex = 1.5, col=COL , pch=c(10,1), box.lty=0)
+ 
+ 
+ 
+ 
+ 
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("red"), xlab = "Densidad", ylab="Flujo", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.7)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,0.7)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(0), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,0.7)))
+LE <- c("SAR", "SARIV", "SADIV")
+COL <-c("red", "blue", "cyan")
+legend(0.65, 0.7, LE, cex=1.25, pt.cex = 1.5, col=COL , pch=c(2,1,0), box.lty=0)
+ 
+
+
+
+
+
+
+
+ 
+ 
+ 
+
+
+
+ 
 ____________________________________
 
 
  
-data <- read.csv("01measuresflu.csv")
+data <- read.csv("01fluxRea.csv")
 X <- data[, 1]
 Y1 <- data [, 2]
-matplot(X,Y1, type="p", pch=c(1), col=c("red"), xlab = "Density", ylab="Flow", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.3)))
+matplot(X,Y1, type="p", pch=c(1), col=c("red"), xlab = "Density", ylab="Flow", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,1.0)))
 par(new = TRUE)
-data <- read.csv("02measuresflu.csv")
-Y2 <- data [, 2]
-matplot(X,Y2, type="p", pch=c(2), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,0.3)))
-LE <- c("Self-organizing reactive", "Self-organizing deliberative")
-COL <-c("red", "blue")
-legend(0.3, 0.31, LE, cex=1.25, pt.cex = 1, col=COL , pch=c(1,2), box.lty=0)
- 
- 
-
-data <- read.csv("01measuresvel.csv")
-X <- data[, 1]
-Y1 <- data [, 2]
-matplot(X,Y1, type="p", pch=c(1), col=c("red"), xlab = "Density", ylab="Velocity", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,1.0)))
-par(new = TRUE)
-data <- read.csv("02measuresvel.csv")
+data <- read.csv("01fluxDeb.csv")
 Y2 <- data [, 2]
 matplot(X,Y2, type="p", pch=c(2), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,1.0)))
 LE <- c("Self-organizing reactive", "Self-organizing deliberative")
 COL <-c("red", "blue")
-legend(0.3, 0.8, cex=1.25, pt.cex = 1, LE, col=COL , pch=c(1,2), box.lty=0)
+legend(0.15, 0.85, LE, cex=1.25, pt.cex = 1, col=COL , pch=c(1,2), box.lty=0)
+ 
+ 
+
+data <- read.csv("02velocityRea.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(1), col=c("red"), xlab = "Density", ylab="Velocity", , cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,12.0)))
+par(new = TRUE)
+data <- read.csv("02velocityDeb.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(2), col=c("blue"),axes=FALSE, xlab = "", ylab="", lwd=2, ylim = range(c(0,12.0)))
+LE <- c("Self-organizing reactive", "Self-organizing deliberative")
+COL <-c("red", "blue")
+legend(0.3, 5.0, cex=1.25, pt.cex = 1, LE, col=COL , pch=c(1,2), box.lty=0)
+ 
+
+____________________________________
+
+
+
+
+
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(3), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(2), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(1), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(0), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("OV", "SAR", "SARIV", "SADIV")
+COL <-c("green", "red","blue", "cyan")
+legend(0.26, 0.55, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,2,1,95), box.lty=0)
  
 
 
+
+
+
+
+
+
+
+
+
+Diferentes Metodos
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(3), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(4), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(4), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.60)))
+LE <- c("OV", "SAR", "IBR", "SARIV", "SADIV")
+COL <-c("green", "red","orange", "cyan", "blue")
+legend(0.26, 0.55, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+ 
+
+
+
+
+Diferentes metodos 184
+
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="l", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("10flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="l", pch=c(3), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("20flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="l", pch=c(4), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+
+
+
+data <- read.csv("02velocity.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(1), col=c("blue"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,6.00)))
+LE <- c("SARBPA")
+COL <-c("blue")
+legend(0.70, 0.55, LE, cex=1.25, pt.cex = 1, col=COL , pch=c(1,2,3,95), box.lty=0)
+ 
+ 
+
+
+
+
+
+
+
+
+
+data <- read.csv("X1flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="l", pch=c(2), col=c("green"), xlab = "Density", ylab="Flow", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X2flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="l", pch=c(4), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X3flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="l", pch=c(4), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X4flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="l", pch=c(5), col=c("black"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X5flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="l", pch=c(5), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X6flux.csv")
+Y6 <- data [, 2]
+matplot(X,Y6, type="l", pch=c(5), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X7flux.csv")
+Y7 <- data [, 2]
+matplot(X,Y7, type="l", pch=c(5), col=c("yellow"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("X8flux.csv")
+Y8 <- data [, 2]
+matplot(X,Y8, type="l", pch=c(5), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+LE <- c("X1", "X2","X3", "X4", "X5", "X6", "X7", "X8")
+COL <-c("green", "red", "cyan", "black", "blue", "orange", "yellow","red")
+legend(0.76, 0.95, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ //waiting time
+ 
+ 
+data <- read.csv("X1waitingtime.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="l", pch=c(2), col=c("green"), xlab = "Density", ylab="Flow", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X2waitingtime.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="l", pch=c(4), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X3waitingtime.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="l", pch=c(4), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X4waitingtime.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="l", pch=c(5), col=c("black"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X5waitingtime.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="l", pch=c(5), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X6waitingtime.csv")
+Y6 <- data [, 2]
+matplot(X,Y6, type="l", pch=c(5), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X7waitingtime.csv")
+Y7 <- data [, 2]
+matplot(X,Y7, type="l", pch=c(5), col=c("yellow"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+par(new = TRUE)
+data <- read.csv("X8waitingtime.csv")
+Y8 <- data [, 2]
+matplot(X,Y8, type="l", pch=c(5), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,10000.00)))
+LE <- c("X1", "X2","X3", "X4", "X5", "X6", "X7", "X8")
+COL <-c("green", "red", "cyan", "black", "blue", "orange", "yellow","red")
+legend(0.16, 9000, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+ 
+ 
+ 
+
+
+--------  Diferentes metodos LAI -------------------------------
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(3), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(2), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(4), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(0), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("OV", "SAR", "IBR", "SARIV", "SADIV")
+COL <-c("green", "red","orange", "blue", "cyan")
+legend(0.75, 0.7, LE, cex=1.25, , pt.cex = 1.5, col=COL , pch=c(3,2,4,1,0), box.lty=0)
+ 
+
+ --------  Diferentes metodos LAI -------------------------------
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("red"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(0), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("SAR", "SARIV", "SADIV")
+COL <-c("red", "blue", "cyan")
+legend(0.75, 0.7, LE, cex=1.25, , pt.cex = 1.5, col=COL , pch=c(2,1,0), box.lty=0)
+ 
+ 
+ 
+
+
+
+Diferentes metodos 184
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(3), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(2), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("03flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(4), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(0), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("OV", "SAR", "IBR", "SARIV", "SADIV")
+COL <-c("green", "red","orange", "blue", "cyan")
+legend(0.75, 0.7, LE, cex=1.25, , pt.cex = 1.5, col=COL , pch=c(3,2,4,1,0), box.lty=0)
+ 
+
+Diferentes metodos 184
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(3), col=c("green"), xlab = "Densidad", ylab="Flujo", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("02flux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(2), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("04flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(1), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+par(new = TRUE)
+data <- read.csv("05flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(0), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.70)))
+LE <- c("OV", "SAR", "SARIV", "SADIV")
+COL <-c("green", "red", "blue", "cyan")
+legend(0.75, 0.7, LE, cex=1.25, , pt.cex = 1.5, col=COL , pch=c(3,2,1,0), box.lty=0)
+
+
+
+  
+ Thetas distitnos
+  
+
+data <- read.csv("01flux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Density", ylab="Flow", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("zflux.csv")
+Y2 <- data [, 2]
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("20flux.csv")
+Y3 <- data [, 2]
+matplot(X,Y3, type="p", pch=c(3), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("30flux.csv")
+Y4 <- data [, 2]
+matplot(X,Y4, type="p", pch=c(3), col=c("black"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("40flux.csv")
+Y5 <- data [, 2]
+matplot(X,Y5, type="p", pch=c(3), col=c("orange"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("50flux.csv")
+Y6 <- data [, 2]
+matplot(X,Y6, type="p", pch=c(3), col=c("cyan"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+par(new = TRUE)
+data <- read.csv("60flux.csv")
+Y7 <- data [, 2]
+matplot(X,Y7, type="p", pch=c(3), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
+LE <- c("1", "7", "20","30","40", "50", "60")
+COL <-c("green", "red","red","black","orange","cyan","blue")
+legend(0.55, 0.99, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
+  
+  
+  
 ----------------------------------
 
 
 
-data <- read.csv("measuresflu01.csv")
+data <- read.csv("0flux.csv")
 X <- data[, 1]
 Y1 <- data [, 2]
-matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Density", ylab="Flow", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,0.30)))
+matplot(X,Y1, type="p", pch=c(2), col=c("green"), xlab = "Density", ylab="Flow", cex.lab=1.5, cex.axis = 1.5, lty = 1, lwd=2, ylim = range(c(0,1.00)))
 par(new = TRUE)
-data <- read.csv("measuresflu02.csv")
+data <- read.csv("5flux.csv")
 Y2 <- data [, 2]
-matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.30)))
+matplot(X,Y2, type="p", pch=c(1), col=c("red"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
 par(new = TRUE)
-data <- read.csv("measuresflu03.csv")
+data <- read.csv("10flux.csv")
 Y3 <- data [, 2]
-matplot(X,Y3, type="p", pch=c(3), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,0.30)))
+matplot(X,Y3, type="p", pch=c(3), col=c("blue"),axes=FALSE, xlab = "", ylab="", lty = 1, lwd=2, ylim = range(c(0,1.00)))
 par(new = TRUE)
-data <- read.csv("measuresflu04.csv")
+data <- read.csv("15flux.csv")
 X1 <- data[, 1]
 Y4 <- data [, 2]
-matplot(X1,Y4, type="l", pch=c(4), col=c("black"),axes=FALSE, xlab = "", ylab="", lty = 1, ylim = range(c(0,0.30)))
+matplot(X1,Y4, type="l", pch=c(4), col=c("black"),axes=FALSE, xlab = "", ylab="", lty = 1, ylim = range(c(0,1.00)))
 LE <- c("Green Wave", "Self-organizing reactive", "Self-organizing deliberative", "Optimality curve")
 COL <-c("green", "red","blue", "black")
 legend(0.26, 0.15, LE, cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1,3,95), box.lty=0)
@@ -529,6 +1109,191 @@ legend(0.4, 0.9, LE, , cex=1.25, , pt.cex = 1, col=COL , pch=c(2,1), box.lty=0)
  
  
 
+
+
+
+library(ggplot)
+data1 <- read.csv("07errorbarflux.csv")
+data2 <- read.csv("07errorbarfluxd.csv")
+p <- ggplot(data1, aes(x=X, y=Y1)) + geom_errorbar(aes(ymin=Y1-sd1, ymax=Y1+sd1), colour="red", width=.1) + geom_point(colour="red")
+p <- p + geom_point(data=data2, aes(X,Y2), colour="blue") + geom_errorbar(aes(ymin=Y2-sd2, ymax=Y2+sd2), colour="blue", width=.1)
+print(p)
+
+
+
+
+
+
+
+
+
+data1$group <- read.csv("07errorbarflux.csv")
+data2$group <- read.csv("07errorbarflux.csv")
+data <- rbind(data1, data2)
+pd <- position_dodge(0.1) # move them .05 to the left and right
+ggplot(data, aes(x=X, y=Y1, group=group, col=group, fill=group)) +
+      geom_point()
+     
+	 
+	  
+	  
+
+
+ggplot(data, aes(x=X, y=Y1)) + geom_errorbar(aes(ymin=Y1-sd1, ymax=Y1+sd1), colour="red", width=.1, position=pd) + geom_point(position=pd, size=3)
+
+
+
+
+qplot(X,Y1)+geom_errorbar(aes(ymin=Y1-sd, ymax=Y1+sd), colour="red", width=0.25)
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+data <- read.csv("07errorbarflux.csv")
+
+
+
+
+
+pd <- position_dodge(0.1) # move them .05 to the left and right
+X <- data[, 1]
+Y1 <- data [, 2]
+sd1 <- data [, 3]
+p1 <- ggplot() + geom_errorbar(aes(ymin=Y1-sd1, ymax=Y1+sd1), colour="red", width=.1, position=pd) + geom_point(position=pd, size=3)
+
+
+
+ggplot(data, aes(x=X, y=Y1)) + geom_errorbar(aes(ymin=Y1-sd1, ymax=Y1+sd1), colour="red", width=.1, position=pd) + geom_point(position=pd, size=3)
+	
+
+
+
+visual1$group <- 1
+visual2$group <- 2
+
+visual12 <- rbind(visual1, visual2)
+
+p <- ggplot(visual12, aes(x=ISSUE_DATE, y=COUNTED, group=group, col=group, fill=group)) +
+      geom_point() +
+      geom_smooth(size=1)
+	  
+	  
+	  
+	  
+
+
+require(ggplot2)
+library(gridExtra)
+library(grid)
+
+ggplot(data, aes(x=X, y=Y1)) + 
+    geom_errorbar(aes(ymin=Y1-sd, ymax=Y1+sd), colour="red", width=.1, position=pd) +
+    #geom_line(position=pd) 
+
+	
+	
+
+	
+
+p <- ggplot() + 
+geom_errorbar(aes(ymin=Y1-sd1, ymax=Y1+sd1), colour="red", width=.1, position=pd) + geom_point(position=pd, size=3) + geom_point(position=pd, size=3) 
+
+
++
+geom_errorbar(aes(ymin=Y2-sd2, ymax=Y2+sd2), colour="blue", width=.1, position=pd) + geom_point(position=pd, size=3) + geom_point(position=pd, size=3)
+
+
+p <- ggplot(visual1, aes(ISSUE_DATE,COUNTED)) + geom_point() + 
+     geom_smooth(fill="blue", colour="darkblue", size=1)
+
+p <- p + geom_point(data=visual2, aes(ISSUE_DATE,COUNTED)) + 
+     geom_smooth(data=visual2, fill="red", colour="red", size=1)
+
+print(p)
+
+
+
+
+
+
+
+
+geom_point(data=visual1, aes(x=X, y=Y1)) + 
+      geom_smooth(data=visual1, aes(x=X, y=Y1), fill="blue",
+        colour="darkblue", size=1) +
+      # red plot
+      geom_point(data=visual2, aes(x=X, y=Y1)) + 
+      geom_smooth(data=visual2, aes(x=ISSUE_DATE, y=COUNTED), fill="red",
+        colour="red", size=1)
+
+
+
+
+p1 <- ggplot(data, aes(x=X, y=Y1)) + 
+p2 <- ggplot(data, aes(x=X, y=Y2)) + 
+
+
+
+grid.arrange(p1,p2)
+
+
+
+install.packages("gridExtra")
+library(gridExtra)
+
+install.packages("grid")
+library(grid)
+
+par(new = TRUE)
+data <- read.csv("07errorbarfluxd.csv")
+pd <- position_dodge(0.1) # move them .05 to the left and right
+X <- data[, 1]
+Y2 <- data [, 2]
+ggplot(data, aes(x=X, y=Y2)) + geom_errorbar(aes(ymin=Y2-sd, ymax=Y2+sd), colour="blue", width=.1, position=pd) + geom_point(position=pd, size=3)
+
+
+
+
+
+p <- ggplot() +
+      # blue plot
+      geom_point(data=visual1, aes(x=ISSUE_DATE, y=COUNTED)) + 
+      geom_smooth(data=visual1, aes(x=ISSUE_DATE, y=COUNTED), fill="blue",
+        colour="darkblue", size=1) +
+      # red plot
+      geom_point(data=visual2, aes(x=ISSUE_DATE, y=COUNTED)) + 
+      geom_smooth(data=visual2, aes(x=ISSUE_DATE, y=COUNTED), fill="red",
+        colour="red", size=1)
+		
+		
+		
+		
+
+
+
+
+data <- read.csv("07errorbarflux.csv")
+X <- data[, 1]
+Y1 <- data [, 2]
+qplot(X,Y1)+geom_errorbar(aes(ymin=Y1-sd, ymax=Y1+sd), colour="red", width=0.25)
+
+
+
+
+
+
+
+ggplot(data, aes(x=X, y=Y1)) + geom_errorbar(aes(ymin=Y1-sd, ymax=Y1+sd), colour="red", width=.1, position=pd) + geom_point(position=pd, size=3)
+	
 
 
  

@@ -49,6 +49,7 @@ int total_cell;
 int n_cell_h;
 int n_cell_v;
 
+int type_experiment;
 int n_exp;
 int n_ticks;
 float size_step;
@@ -77,9 +78,11 @@ int InializedCity(int inter_control, int n_h_streets, int m_v_streets, int d_s_b
 
     total_cell = 0;
     _velocity = 0;
-    flux = 0;
     velocity_total = 0;
+    flux = 0;
     flux_total = 0;
+    waiting_time = 0;
+    waiting_time_total = 0;
     //n_ticks = 5400;
 
     n_hor_streets = n_h_streets; //An integer that represents the amount of horizontal streets
@@ -213,6 +216,7 @@ int DistribuiteVehicles(float d_h, float d_v)
                 tmp_vehicle.ls = ls;
                 tmp_vehicle.visible = true;
                 tmp_vehicle.autonomous = false;
+                tmp_vehicle.failure = false;
                 tmp_vehicle.color.r = 0;
                 tmp_vehicle.color.g = 0;
                 tmp_vehicle.color.b = 255;
@@ -264,6 +268,7 @@ int DistribuiteVehicles(float d_h, float d_v)
                 tmp_vehicle.ls = ls;
                 tmp_vehicle.visible = true;
                 tmp_vehicle.autonomous = false;
+                tmp_vehicle.failure = false;
                 tmp_vehicle.color.r = 0;
                 tmp_vehicle.color.g = 0;
                 tmp_vehicle.color.b = 255;
@@ -345,6 +350,8 @@ int DistribuiteVehicles(float d_h, float d_v)
     }
 
     int size_autonomous = per_autonomous * size_vehicles;
+
+    int size_failure = size_autonomous;
     //qDebug () << size_autonomous << per_autonomous << size_vehicles;
 
     i = 0;
@@ -358,6 +365,13 @@ int DistribuiteVehicles(float d_h, float d_v)
             vehicles_A[i].autonomous = true;
             vehicles_Z[i].autonomous = true;
         }
+
+
+        if (i < size_failure){
+            vehicles_A[i].failure = true;
+            vehicles_Z[i].failure = true;
+        }
+
 
         SetVehicleCell(vehicles_A[i].position.y, vehicles_A[i].position.x, true, i);
         i++;
@@ -1075,12 +1089,160 @@ int searchVehicleFrontID(int id)
     return id_f;
 }
 
+int searchVehicleFrontSameTypeStreetID(int id)
+{
+    char type_street;
+    char direction;
+    int y, x;
+    int rear;
+    int id_f;
+    int k;
+    int upper_limit;
+    int lower_limit;
+
+    SVehicle vehicle = GetVehicle(id);
+
+    type_street = vehicle.type_street;
+    direction = vehicle.direction;
+    y = vehicle.position.y;
+    x = vehicle.position.x;
+    rear = vehicle.rear_position;
+
+    id_f = INVALID;
+
+    if (type_street == 'H')
+        upper_limit = d_hor_street;
+    else
+        upper_limit = d_ver_street;
+
+    lower_limit = rear;
+
+    if (direction == 'R'){
+
+        for (k = x + 1; k < upper_limit; k++)
+            if (GetValueCellStreet(type_street, y, k) >= 1) {
+                id_f = GetIDCellStreet(type_street, y, k);
+                if (type_street == GetVehicle(id_f).type_street) {
+                    if (id_f != id) {
+                        return id_f;
+                    }
+                    else {
+                        return INVALID;
+                    }
+                }
+            }
+
+        for (k = 0; k <= lower_limit; k++)
+            if (GetValueCellStreet(type_street, y, k) >= 1) {
+                id_f = GetIDCellStreet(type_street, y, k);
+
+                if (type_street == GetVehicle(id_f).type_street) {
+                    if (id_f != id)
+                        return id_f;
+                    else {
+                        return INVALID;
+                    }
+                }
+            }
+    }
+    else {
+
+        for (k = x - 1; k >= 0; k--)
+            if (GetValueCellStreet(type_street, y, k) >= 1) {
+                id_f = GetIDCellStreet(type_street, y, k);
+
+                if (type_street == GetVehicle(id_f).type_street) {
+                    if (id_f != id)
+                        return id_f;
+                    else {
+                        return INVALID;
+                    }
+                }
+            }
+
+        for (k = upper_limit - 1; k >= lower_limit; k--)
+            if (GetValueCellStreet(type_street, y, k) >= 1) {
+                id_f = GetIDCellStreet(type_street, y, k);
+
+                if (type_street == GetVehicle(id_f).type_street) {
+                    if (id_f != id)
+                        return id_f;
+                    else{
+                        return INVALID;
+                    }
+                }
+            }
+    }
+
+
+    return id_f;
+}
+
+int searchVehicleFrontSameBlockID(int id)
+{
+    char type_street;
+    char direction;
+    int y, x;
+    int rear;
+    int id_f;
+    int k;
+    int d_street;
+    int n, m;
+
+    SVehicle vehicle = GetVehicle(id);
+
+    type_street = vehicle.type_street;
+    direction = vehicle.direction;
+    y = vehicle.position.y;
+    x = vehicle.position.x;
+    rear = vehicle.rear_position;
+
+    int k_intersection = GetIndexIntersection(type_street, x, direction);
+
+    if (type_street == 'H') {
+        n = y;
+        m = k_intersection;
+        d_street = d_hor_street;
+    }
+    else {
+        n = k_intersection;
+        m = y;
+        d_street = d_ver_street;
+    }
+
+    int pos_intersection = GetPositionIntersection(type_street, n, m);
+
+    id_f = INVALID;
+
+    if (x != pos_intersection) {
+
+        int distance = calculateDistance(x, pos_intersection, direction, d_street);
+
+        if (direction == 'R'){
+            for (k = x + 1; k <= x + distance; k++)
+                if (GetValueCellStreet(type_street, y, k) >= 1) {
+                    id_f = GetIDCellStreet(type_street, y, k);
+                    return id_f;
+                }
+        }
+        else {
+            for (k = x - 1; k >= x - distance; k--)
+                if (GetValueCellStreet(type_street, y, k) >= 1) {
+                    id_f = GetIDCellStreet(type_street, y, k);
+                    return id_f;
+                }
+        }
+    }
+
+    return id_f;
+}
+
+
 
 int GetPositionIntersection(char type_street, int n, int m)
 {
-    int pos_int;
 
-    pos_int = GetPositionIntersectionTrafficLightSO(type_street, n, m);
+    return GetPositionIntersectionTrafficLightSO(type_street, n, m);
 
 }
 
@@ -1122,6 +1284,74 @@ void freeRegionIntersection()
     }
 }
 
+
+void regionIntersection() {
+
+    //Create region for each traffic light
+    int k, i, m, n;
+    int reposition_cell_h;
+    int reposition_cell_v;
+
+
+    for (k = 0; k < 2; k++){
+        for (m = 0; m < m_ver_streets; m++){
+            reposition_cell_h = m * d_side_block + m;
+
+            for (i = reposition_cell_h; i <= reposition_cell_h + d_side_block; i++){
+
+                if (k == 0){
+                    if ((m + 1) == m_ver_streets){
+                        if (i + 1 == d_hor_street )
+                            h_regionIntersection[k][0] = 0;
+                        else
+                            h_regionIntersection[k][i + 1] = 0;
+                    }
+                    else{
+                        h_regionIntersection[k][i + 1] = m + 1;
+                    }
+                }
+                else{
+                    h_regionIntersection[k][i] = m;
+                }
+            }
+        }
+    }
+
+    //for (i = 0; i < d_hor_street; i++)
+    //  qDebug() << "K : " << k << "i : " << i << "h_reg: " << h_regionIntersection[1][i];
+
+    for (k = 0; k < 2; k++){
+        for (n = 0; n < n_hor_streets; n++){
+
+            reposition_cell_v = n * d_side_block + n;
+
+            for (i = reposition_cell_v; i <= reposition_cell_v + d_side_block; i++){
+
+                if (k == 0){
+                    if ((n + 1) == n_hor_streets){
+                        if (i + 1 == d_ver_street )
+                            v_regionIntersection[k][0] = 0;
+                        else
+                            v_regionIntersection[k][i + 1] = 0;
+                    }
+                    else{
+                        v_regionIntersection[k][i + 1] = n + 1;
+                    }
+                }
+                else{
+                    v_regionIntersection[k][i] = n;
+                }
+            }
+        }
+    }
+
+    //for (i = 0; i < d_ver_street; i++)
+      //  qDebug() << "K : " << k << "i : " << i << "v_reg: " << v_regionIntersection[0][i];
+
+}
+
+
+#if 0
 void regionIntersection() {
 
     //Create region for each traffic light
@@ -1157,7 +1387,7 @@ void regionIntersection() {
                             h_regionIntersection[k][i] = m;
                     }
                 }
-                //printf("%d : %d - %d\n", k, i, h_regionTraffic_light[k][i]);
+                qDebug() << "K : " << k << "i : " << i << "h_reg: " << h_regionIntersection[k][i];
             }
         }
     }
@@ -1194,6 +1424,8 @@ void regionIntersection() {
         }
     }
 }
+
+#endif
 
 int GetIndexIntersection(char type_street, int x, int direction)
 {

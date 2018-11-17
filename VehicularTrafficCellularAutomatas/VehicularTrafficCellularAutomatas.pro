@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     slot_system.cpp \
     simulation.cpp \
     vehicular_model.cpp \
-    utilities.cpp
+    utilities.cpp \
+    distributed_control.cpp
 
 HEADERS  += mainwindow.h \
     traffic_light.h \
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.h \
     slot_system.h \
     simulation.h \
     vehicular_model.h \
-    utilities.h
+    utilities.h \
+    distributed_control.h
 
 FORMS    += mainwindow.ui
 

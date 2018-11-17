@@ -28,6 +28,7 @@ struct SVehicle {
     int previous_position;
     bool visible;
     bool autonomous;
+    bool failure;
 
 };
 

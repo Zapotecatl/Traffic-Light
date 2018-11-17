@@ -1,13 +1,13 @@
 <welcome>
- <!-- intersection_control 1 (green_wave) 2 (self_organizing) 3 (pressure self_organizing) 4 (slot system)-->
- <vehicles  model = "1" ls = "2" vmax = "1" p_turn = "0.0" per_autonomous = "1.0"/>
- <city intersection_control = "4" n_h_streets = "10" m_v_streets= "10" density_h = "0.8" density_v = "0.8" d_s_block = "32"/>
+ <!-- intersection_control 1 (green_wave) 2 (self_organizing) 3 (impulse self_organizing) 4 (slot system)-->
+ <vehicles  model = "2" ls = "2" vmax = "12" p_turn = "0.0" per_autonomous = "0.0"/>
+ <city intersection_control = "3" n_h_streets = "3" m_v_streets= "3" density_h = "0.3" density_v = "0.3" d_s_block = "32"/>
  <green_wave P = "32"/>
- <self_organizing maxim_n = "13" maxim_m = "2" min_time = "10" max_time = "600"/>
- <sensors method = "1" distance_d = "20" distance_r = "10" distance_e = "8" distance_z = "3" precision = "1.0"/>
+ <self_organizing maxim_n = "13" maxim_m = "2" min_time = "10" max_time = "60"/>
+ <sensors method = "1" distance_d = "20" distance_r = "10" distance_e = "8" distance_z = "8" precision = "1.0"/>
  <!-- N = 1(fair) N > 1 (batch)-->
- <slot_system N = "5"/> 
- <experiments n_exp = "20" n_ticks = "5400" size_step = "0.02"/>
+ <slot_system N = "50"/> 
+ <experiments type_experiment = "1" n_exp = "10" n_ticks = "5400" size_step = "0.02"/>
  <rules r1 = "1" r2 = "1" r3 = "1" r4 = "1" r5 = "1" r6 = "1"/>
  </welcome>
 

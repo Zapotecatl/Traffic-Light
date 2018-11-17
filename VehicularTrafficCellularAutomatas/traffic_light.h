@@ -87,8 +87,9 @@ struct  STrafficSO{
 
    // float p_density;
     int theta;
-    int theta_time;
-    int theta_vehicles;
+    int tau;
+    int d_vehicles;
+    int total_vehicles;
 
 };
 
@@ -142,11 +143,13 @@ void testRules(int n, int m);
 //void OptimizedTrafficLightSelfOrganizing(int n, int m);
 
 //Metodo auto-organizante basado en presion
-void TrafficLightPressureSelfOrganizing(int n, int m);
-bool PressureRule6(int n, int m);
-void PressureRule1(int n, int m);
-void PressureSetSingleRed(char type_street, int n, int m);
-void PressureSetSingleGreen(char type_street, int n, int m);
+void TrafficLightImpulseSelfOrganizing(int n, int m);
+bool narrowWaitTimes(int n, int m);
+bool avoidObstructingIntersection(int n, int m);
+void greenStreetGreaterVehicularImpulse(int n, int m);
+
+void ImpulseSetSingleRed(char type_street, int n, int m);
+void ImpulseSetSingleGreen(char type_street, int n, int m);
 
 int allocateMemoryTrafficLight();
 int allocateMemoryTrafficLightSO();
@@ -154,6 +157,5 @@ int allocateMemoryTrafficLightSO();
 void freeTrafficLight();
 void freeTrafficLightSO();
 void FreeTrafficLights();
-
 
 #endif // TRAFFIC_LIGHT_H

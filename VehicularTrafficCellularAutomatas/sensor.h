@@ -12,7 +12,7 @@
 
 #include "vehicular_model.h"
 #include "vehicle.h"
-#include "traffic_light.h"
+#include "city.h"
 
 using namespace std;
 
@@ -25,6 +25,7 @@ struct VirtualVehicle {
     int position;
     int velocity;
     int id;
+    bool visible;
     char direction;
 
 };
@@ -44,6 +45,22 @@ struct STraditionalSensor {
     STSensor horizontal;
     STSensor vertical;
 };
+
+struct SDCSensor {
+    int position;
+    char direction;
+    int distance_d;
+    int distance_r;
+    int distance_e;
+    int start;
+    int end;
+};
+
+struct SDistributedSensor {
+    SDCSensor horizontal;
+    SDCSensor vertical;
+};
+
 
 struct SSensor {
 
@@ -125,12 +142,7 @@ struct Package3 {
 
 extern STraditionalSensor **t_sensores;
 extern SDeliberativeSensors **d_sensores;
-
-extern int *h_regionSensoresT[2];
-extern int *v_regionSensoresT[2];
-
-extern int *h_regionSensoresNew[2];
-extern int *v_regionSensoresNew[2];
+extern SDistributedSensor **distributed_sensores;
 
 extern float precison_sensor;
 extern int metodo_sensado;
@@ -158,9 +170,12 @@ int GetOffsetSensor(char type_street, int n, int m);
 int GetSizeReadSensor(char type_street, int n, int m);
 int GetPositionVirtualVehicleSensor(char type_street, int n, int m, int i);
 int IndexFrontSensor(char type_street, int n, int m);
-bool determineVisible(char type_street, char direction, int x, bool prev_visible);
+bool determineVisible(char type_street, char direction, int x, int n, int m, bool prev_visible);
 int PositionFrontSensor(char type_street, int n, int m);
 int OneCellBeforePositionFrontSensor(char type_street, char direction, int n, int m);
+int GetPositionSensedSensor(char type_street, int n, int m);
+void SetVisibleSensedVehicle(char type_street, int n, int m, bool visible);
+bool GetVisibleSensedVehicle(char type_street, int n, int m);
 
 Package1 ReceivesMessageFrontCT(char type_street, int n, int m, int tmp);
 void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m);
@@ -197,9 +212,18 @@ int allocateMemorySensors();
 void InializedSensors(int metodo_s, float precision, int distance_d, int distance_r, int distance_e, int distance_z);
 void FreeSensors();
 
-void resetDetectVehicle();
-void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int previous_x, int velocity, int distance_street, int id);
+void resetAllDetectVehicle();
+void resetOneDetectVehicle(char type_street, int n, int m);
+void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int current_rear_x, int previous_x, int velocity, int distance_street, int id);
 
+
+// Distributed Sensors
+int allocateMemoryDistributedSensors();
+void freeDistributedSensors();
+void regionDistributedSensores();
+int GetIndexDistributedSensors(char type_street, char direction, int x);
+void DistributedSensing(int n, int m);
+void InializedDistributedSensors(int distance_d, int distance_r, int distance_e, int distance_z);
 
 #endif // SENSOR_H
 

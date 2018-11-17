@@ -19,6 +19,7 @@
 #include "vehicular_model.h"
 #include "vehicle.h"
 #include "traffic_light.h"
+#include "distributed_control.h"
 
 using namespace std;
 
@@ -81,6 +82,7 @@ extern int n_cell_v;
 
 extern int size_vehicles;
 
+extern int type_experiment;
 extern int n_exp;
 extern int n_ticks;
 extern float size_step;
@@ -117,6 +119,8 @@ bool isVehiclesStoppedIntersection(int n, int m);
 bool VehiclesStoppedDistance_e(char type_street, int n, int m, int d_e);
 int numberVehiclesDistance_z(char type_street, int n, int m, int d_z);
 int searchVehicleFrontID(int id);
+int searchVehicleFrontSameTypeStreetID(int id);
+int searchVehicleFrontSameBlockID(int id);
 int GetPositionIntersection(char type_street, int n, int m);
 
 void allocateMemoryRegionIntersection();

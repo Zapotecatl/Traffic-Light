@@ -1,5 +1,25 @@
 #include "utilities.h"
 
+int minimum(int a, int b)
+{
+   return a < b ? a : b;
+}
+
+int maximum(int a, int b)
+{
+    return a > b ? a : b;
+}
+
+float minimum(float a, float b)
+{
+   return a < b ? a : b;
+}
+
+float maximum(float a, float b)
+{
+    return a > b ? a : b;
+}
+
 // random generator function:
 int myrandom (int i)
 {

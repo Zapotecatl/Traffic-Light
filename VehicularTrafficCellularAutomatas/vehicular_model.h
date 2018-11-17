@@ -13,9 +13,7 @@ extern int model;
 extern float p_turn;
 extern float per_autonomous;
 extern int M;
-
-using std::min;
-using std::max;
+extern float delta_v;
 
 void InitializeVehicularModel(int _model, int _ls, int _vmax, float p_t, float _per_autonomous);
 

@@ -17,7 +17,9 @@ void RunSimulation(int tick)
     bool visible;
 
     resetCityWrite();
-    resetDetectVehicle();
+    resetAllDetectVehicle();
+    resetDistributeFailureVehicle();
+
 
     SVehicle vehicle, front_vehicle;
 
@@ -45,26 +47,57 @@ void RunSimulation(int tick)
 
         int id_f = searchVehicleFrontID(i);
 
+        bool there_is_front_vehicle = false;
+
         if (id_f != INVALID){
             front_vehicle = GetVehicle(id_f);
-
             if (type_street == front_vehicle.type_street){
+                there_is_front_vehicle = true;
                 xp = front_vehicle.rear_position;
                 vp = front_vehicle.speed;
-                //qDebug() << id_f << direction << x << "-" << xp;
+                //qDebug() << "Correcto: " << id_f << direction << x << "-" << xp;
             }
             else {
-                int pos_intersection = GetPositionIntersection(type_street, n, m);
-                xp = pos_intersection;
-                vp = 0;
+
+                //Vehiculo frontal en el flujo perpendicular
+                int front_n, front_m;
+                if (type_street == 'H') {
+                    front_n = y;
+                    front_m = front_vehicle.position.y;
+                }
+                else {
+                    front_n = front_vehicle.position.y;
+                    front_m = y;
+                }
+
+                int pos_intersection = GetPositionIntersection(type_street, front_n, front_m);
+
+                if ( x != pos_intersection) {//No Collision
+                    there_is_front_vehicle = true;
+                    xp = pos_intersection;
+                    vp = 0;
+                }
+                else { //Collision
+                    qDebug() << "WARNING: Estan en el mismo lugar (colision), buscar el siguiente frontal " << x << xp;
+                    id_f = searchVehicleFrontSameTypeStreetID(i);
+                    if (id_f != INVALID){
+                        there_is_front_vehicle = true;
+                        front_vehicle = GetVehicle(id_f);
+                        xp = front_vehicle.rear_position;
+                        vp = front_vehicle.speed;
+                    }
+                }
             }
         }
-        else {
+
+
+        if (there_is_front_vehicle == false) {
             vp = vmax;
             if (direction == 'R')
                 xp = (x == 0) ? d_street - 1 : x - 1;
             else
                 xp = (x == d_street - 1) ? 0 : x + 1;
+
             //qDebug() << "WARNING: No hay frontal" << __PRETTY_FUNCTION__;
         }
 
@@ -89,13 +122,16 @@ void RunSimulation(int tick)
         SetPositionVehicle(y, x, i);
         SetVelocityVehicle(vn_new, i);
 
-        visible = determineVisible(type_street, direction, x, prev_visible);//Visibilidad
+        visible = determineVisible(type_street, direction, x, n, m, prev_visible);//Visibilidad
+        SetVisibleVehicle(visible, i);
+
         /*
          * SetDirectionVehicle(direction, i); //Cambiar en turn?
         if (frand() < p_turn) {
             turn(type_street, y, x, vn_new, direction, visible, i);
         }
         */
+
         SetVehicleCell(y, x, visible, i);
     }
 
@@ -116,6 +152,8 @@ void RunSimulation(int tick)
             Flux(density_h);
         else
             Flux(density_v);
+
+        WaitingTime();
     }
 
     SwitchMatricesRW();
@@ -138,21 +176,25 @@ void RunIntersectionControl(int n, int m)
         else
             deliberativeSensing(n, m);//DELIBERATIVE
 
-       // qDebug() << "Here";
+        // qDebug() << "Here";
 
         TrafficLightSelfOrganizing(n, m);
     }
-    else if (intersection_control == 3){//PRESSURE SELF-ORGANIZING
+    else if (intersection_control == 3){//Impulse SELF-ORGANIZING
 
         if (metodo_sensado == 1)
             traditionalSensing(n, m);//REACTIVE
         else
             deliberativeSensing(n, m);//DELIBERATIVE
 
-        TrafficLightPressureSelfOrganizing(n, m);
+        TrafficLightImpulseSelfOrganizing(n, m);
     }
     else if (intersection_control == 4){// SLOT FAIR  SLOT BATCH
         slotBasedSystem(n, m);
+    }
+    else if (intersection_control == 5){// DISTRIBUTED SYSTEM
+        DistributedSensing(n, m);
+        DistributedSystem(n, m);
     }
 
 }
@@ -161,16 +203,35 @@ int RunExperiments(int _model, int _ls, int _vmax, int n_h, int n_v, int n_b, fl
 {
     float density;
 
-    fp_f = fopen("measuresflu.csv", "w");   // Abrir archivo para escritura
-    fp_v = fopen("measuresvel.csv", "w");   // Abrir archivo para escritura
+
+
+    fp_f = fopen("01flux.csv", "w");   // Abrir archivo para escritura
+    fp_v = fopen("02velocity.csv", "w");   // Abrir archivo para escritura
+    fp_wt = fopen("03waitingtime.csv", "w");   // Abrir archivo para escritura
+    fp_sdf = fopen("04SDflux.csv", "w");   // Abrir archivo para escritura
+    fp_sdv = fopen("05SDvelocity.csv", "w");   // Abrir archivo para escritura
+    fp_sdw = fopen("06SDwait.csv", "w");   // Abrir archivo para escritura
 
     fp_fopt = fopen("fluopt.csv", "w");   // Abrir archivo para escritura
     fp_vopt = fopen("velopt.csv", "w");   // Abrir archivo para escritura
 
-    int tmp_ticks = 3600;//para estabilizar el sistema
+    int tmp_ticks = 2700;//para estabilizar el sistema
+
+    //Titulo
+    fprintf(fp_v, "%c,%c\n", 'X', 'Y');//con estos datos se grafica el diagrama fundamental del trafico
+    fprintf(fp_f, "%c,%c\n", 'X', 'Y');
+    fprintf(fp_wt, "%c,%c\n", 'X', 'Y');
+    fprintf(fp_sdv, "%c,%c\n", 'X', 'Y');
+    fprintf(fp_sdf, "%c,%c\n", 'X', 'Y');
+    fprintf(fp_sdw, "%c,%c\n", 'X', 'Y');
 
     fprintf(fp_v, "%f,%f\n", 0.0, 0.0);//con estos datos se grafica el diagrama fundamental del trafico
-    fprintf(fp_f, "%f,%f\n", 0.0, 0.0);//con estos datos se grafica el diagrama fundamental del trafico
+    fprintf(fp_f, "%f,%f\n", 0.0, 0.0);
+    fprintf(fp_wt, "%f,%f\n", 0.0, 0.0);
+    fprintf(fp_sdv, "%f,%f\n", 0.0, 0.0);
+    fprintf(fp_sdf, "%f,%f\n", 0.0, 0.0);
+    fprintf(fp_sdw, "%f,%f\n", 0.0, 0.0);
+
 
     fprintf(fp_vopt, "%f,%f\n", 0.0, 0.0);
     fprintf(fp_fopt, "%f,%f\n", 0.0, 0.0);
@@ -198,45 +259,65 @@ int RunExperiments(int _model, int _ls, int _vmax, int n_h, int n_v, int n_b, fl
         //printf("%f\n", density);
         save_velocity = 0;
         save_flux = 0;
+        save_waiting_time = 0;
+        save_SD_velocity = 0;
+        save_SD_flux = 0;
+
+        SD_velocity_total = new float[n_exp];
+        SD_flux_total = new float[n_exp];
+        SD_wait_total = new float[n_exp];
 
         for (int i = 0; i < n_exp; i++) {
+
             switch_matriz = true;
             switch_vehicles = true;
 
             _velocity = 0;
-            flux = 0;
             velocity_total = 0;
+            flux = 0;
             flux_total = 0;
+            waiting_time = 0;
+            waiting_time_total = 0;
+
             collisions = 0;
 
             InializedCity(met, n_h, n_v, n_b, density, density);
             InializedTrafficLights(_P, max_n, max_m, min_t, max_t);
             InializedSlotSystem(_N);
+            InializedDistributedControl(max_n, max_m, min_t, max_t);
             InializedSensors(met_s, pre, dis_d, dis_r, dis_e, dis_z);
 
             for (int tick = 0; tick < tmp_ticks; tick++)//Establizar sistema (superar trasciendes)
                 RunSimulation(tick);
 
             _velocity = 0;
-            flux = 0;
             velocity_total = 0;
+            flux = 0;
             flux_total = 0;
+            waiting_time = 0;
+            waiting_time_total = 0;
+
             collisions = 0;
 
             for (int tick = 0; tick < n_ticks; tick++)
                 RunSimulation(tick);
 
             //qDebug() << "No. Colisiones: " << collisions << "- No. Vehiculos" << total_vehicles;
-            CalculateSaveMeasures();
+
+            CalculateSaveMeasures(i);
             qDebug() << "Density:" << density;
 
             FreeSensors();
             freeSlotSystem();
+            freeDistributedControl();
             FreeTrafficLights();
             FreeCity();
         }
 
         SaveMeasures(density);
+        delete [] SD_velocity_total;
+        delete [] SD_flux_total;
+        delete [] SD_wait_total;
         //printf("Density: %f", densitiy);
         //printf("\a\a");
     }
@@ -249,11 +330,141 @@ int RunExperiments(int _model, int _ls, int _vmax, int n_h, int n_v, int n_b, fl
 
     fclose(fp_f);
     fclose(fp_v);
+    fclose(fp_wt);
+    fclose(fp_sdf);
+    fclose(fp_sdv);
+    fclose(fp_sdw);
+
+
     fclose(fp_fopt);
     fclose(fp_vopt);
 
     return 0;
 }
+
+int RunExperiments3D(int _model, int _ls, int _vmax, int n_h, int n_v, int n_b, float p_t, int met, float _P, int max_n, int max_m, int min_t, int max_t, int met_s, float pre, int dis_d, int dis_r, int dis_e, int dis_z, float per_auto, int _N)
+{
+    float dens_h, dens_v;
+
+    fp_f = fopen("01flux.csv", "w");   // Abrir archivo para escritura
+    fp_v = fopen("02velocity.csv", "w");   // Abrir archivo para escritura
+    fp_wt = fopen("03waitingtime.csv", "w");   // Abrir archivo para escritura
+    fp_sdf = fopen("04SDflux.csv", "w");   // Abrir archivo para escritura
+    fp_sdv = fopen("05SDvelocity.csv", "w");   // Abrir archivo para escritura
+    fp_sdw = fopen("06SDwait.csv", "w");   // Abrir archivo para escritura
+
+    int tmp_ticks = 250;//para estabilizar el sistema
+
+    qDebug() << "Ejecuntando, espere por favor...";
+    clock_t start = clock();
+
+    InitializeVehicularModel(_model, _ls, _vmax, p_t, per_auto);
+
+    float dens = 0.0;
+
+    for (dens_h = dens; dens_h <= 1.0; dens_h+=size_step){
+        for (dens_v = dens; dens_v <= 1.0; dens_v+=size_step){
+            //printf("%f\n", density);
+            save_velocity = 0;
+            save_flux = 0;
+            save_waiting_time = 0;
+            save_SD_velocity = 0;
+            save_SD_flux = 0;
+
+            SD_velocity_total = new float[n_exp];
+            SD_flux_total = new float[n_exp];
+            SD_wait_total = new float[n_exp];
+
+            for (int i = 0; i < n_exp; i++) {
+
+                switch_matriz = true;
+                switch_vehicles = true;
+
+                _velocity = 0;
+                velocity_total = 0;
+                flux = 0;
+                flux_total = 0;
+                waiting_time = 0;
+                waiting_time_total = 0;
+
+                collisions = 0;
+
+                int r = InializedCity(met, n_h, n_v, n_b, dens_h, dens_v);
+
+                if (r != 0) {
+                InializedTrafficLights(_P, max_n, max_m, min_t, max_t);
+                InializedSlotSystem(_N);
+                InializedDistributedControl(max_n, max_m, min_t, max_t);
+                InializedSensors(met_s, pre, dis_d, dis_r, dis_e, dis_z);
+
+                for (int tick = 0; tick < tmp_ticks; tick++)//Establizar sistema (superar trasciendes)
+                    RunSimulation(tick);
+
+                _velocity = 0;
+                velocity_total = 0;
+                flux = 0;
+                flux_total = 0;
+                waiting_time = 0;
+                waiting_time_total = 0;
+
+                collisions = 0;
+
+                for (int tick = 0; tick < n_ticks; tick++)
+                    RunSimulation(tick);
+
+                //qDebug() << "No. Colisiones: " << collisions << "- No. Vehiculos" << total_vehicles;
+
+                CalculateSaveMeasures(i);
+                }
+                else {
+                    //No hay vehiculos, es invalido hacer calculos
+                    save_velocity = 0;
+                    save_flux = 0;
+                    save_waiting_time = 0;
+                    save_value_intersections = 0;
+
+                    SD_velocity_total[i] = 0;
+                    SD_flux_total[i] = 0;
+                    SD_wait_total[i] = 0;
+
+                }
+
+                qDebug() << "Density H, V y Total:" << dens_h << dens_v << (dens_h + dens_v) / 2.0;
+
+                FreeSensors();
+                freeSlotSystem();
+                freeDistributedControl();
+                FreeTrafficLights();
+                FreeCity();
+            }
+
+            SaveMeasures3D(dens_h, dens_v);
+
+            delete [] SD_velocity_total;
+            delete [] SD_flux_total;
+            delete [] SD_wait_total;
+            //printf("Density: %f", densitiy);
+            //printf("\a\a");
+        }
+    }
+
+    freeLAI();
+    qDebug() << "Fin:";
+
+    //printf ("End...\n ");
+    //  printf("Tiempo transcurrido: %f", ((double)clock() - start) / CLOCKS_PER_SEC);
+
+    fclose(fp_f);
+    fclose(fp_v);
+    fclose(fp_wt);
+    fclose(fp_sdf);
+    fclose(fp_sdv);
+    fclose(fp_sdw);
+
+    return 0;
+}
+
+
 
 /*
 int RunExperiments(int n_h, int n_v, int n_b, float p_t, int met, float _P, int max_n, int max_m, int min_t, int max_t, int met_s, float pre, int dis_d, int dis_r, int dis_e, int dis_z)
@@ -481,6 +692,13 @@ int mainFunctionRules(int n_h, int n_v, int n_b, float p_t, int met, float _P, i
                 //printf("%f\n", density);
                 save_velocity = 0;
                 save_flux = 0;
+                save_waiting_time = 0;
+                save_SD_velocity = 0;
+                save_SD_flux = 0;
+
+                SD_velocity_total = new float[n_exp];
+                SD_flux_total = new float[n_exp];
+                SD_wait_total = new float[n_exp];
 
                 for (int i = 0; i < n_exp; i++) {
 
@@ -488,9 +706,11 @@ int mainFunctionRules(int n_h, int n_v, int n_b, float p_t, int met, float _P, i
                     switch_vehicles = true;
 
                     _velocity = 0;
-                    flux = 0;
                     velocity_total = 0;
+                    flux = 0;
                     flux_total = 0;
+                    waiting_time = 0;
+                    waiting_time_total = 0;
                     collisions = 0;
 
                     //InitializeVehicularModel(_model, _ls, _vmax, p_t, _per_autonomous);
@@ -505,9 +725,12 @@ int mainFunctionRules(int n_h, int n_v, int n_b, float p_t, int met, float _P, i
                             RunSimulation(tick);
 
                         _velocity = 0;
-                        flux = 0;
                         velocity_total = 0;
+                        flux = 0;
                         flux_total = 0;
+                        waiting_time = 0;
+                        waiting_time_total = 0;
+
                         collisions = 0;
 
                         for (int tick = 0; tick < n_ticks; tick++)
@@ -515,14 +738,14 @@ int mainFunctionRules(int n_h, int n_v, int n_b, float p_t, int met, float _P, i
                     }
 
                     //qDebug() << "No. Colisiones: " << collisions << "- No. Vehiculos" << total_vehicles;
-                    CalculateSaveMeasures();
-
+                    CalculateSaveMeasures(i);
 
                     //qDebug() << "Density_H:" << density_h << "Density_V:" << density_v;
 
                     freeDeliberativeSensors();
                     freeTraditionalSensors();
                     freeSlotSystem();
+                    freeDistributedControl();
                     freeTrafficLightSO();
                     freeTrafficLight();
                     freeRegionIntersection();
@@ -532,9 +755,11 @@ int mainFunctionRules(int n_h, int n_v, int n_b, float p_t, int met, float _P, i
                     if (r > 0)
                         FreeVehicles();
 
-
                 }
 
+                delete [] SD_velocity_total;
+                delete [] SD_flux_total;
+                delete [] SD_wait_total;
 
                 SaveMeasuresRules(density_h, density_v, rules, fv, ff);
                 //SaveMeasuresRules(density_v, density_v, rules, fv, ff);

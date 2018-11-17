@@ -4,6 +4,7 @@
 #include <iostream>
 #include <list>
 #include <math.h> /* ceil */
+#include <algorithm>
 
 #include <QDebug>
 
@@ -24,7 +25,6 @@ struct SSlotBasedSystem {
     int Tsep;
     int N;
     int tl;
-    int t_res;
     char dl;
 
     //Parametros de la interseccion
@@ -37,23 +37,25 @@ struct SSlotBasedSystem {
     char direction_v;
 
     std::list<SSlot> ordered_list;
-    std::list<SSlot> list_H;
-    std::list<SSlot> list_V;
     std::list<SSlot> batch;
 
-    SSlot slot_last_h;
-    SSlot slot_last_v;
+    int id_slot_last_h;
+    int id_slot_last_v;
 
-    bool vehicle_stop_H;
-    bool vehicle_stop_V;
-    int state;//1.- normal
+    int state;//0.-Sin bloqueos 3.- Ambos bloqueados 2.- Bloqueado en H 1.- Bloqueado en V
 };
 
 extern SSlotBasedSystem **slot_system;
 
 void InializedSlotSystem(int N);
 void slotBasedSystem(int n, int m);
+int slot_rule_e(int n, int m);
+
 void insertSlotsList(int n, int m);
+void leftInsert(char type_street, int y, int _start, int _end, int _pos_inter_x, int _d_street, std::list<SSlot>& list);
+void rightInsert(char type_street, int y, int _start, int _end, int _pos_inter_x, int _d_street, std::list<SSlot>& list);
+bool isIDStillValid(int n, int m, int id);
+
 void updateAtv(int n, int m);
 void calculateOrderedList(int n, int m);
 int GetOccupancyIdSlotSystem(int n, int m);
@@ -62,11 +64,12 @@ int GetPositionIntersectionSlotSystem(char type_street, int n, int m);
 void allocateMemorySlotSystem();
 void freeSlotSystem();
 void printList(int n, int m);
+void printBatch(int n, int m);
 int GetValueSlotBasedSystem(char type_street, int n, int m, int id);
 
 int calculateT1();
-int calculateT2(int vel);
-int calculateATV(int vel, int position_1, int position_2, char dir, int distance_street);
+int calculateT2();
+int calculateATV(int id, int position_intersection, char dir, int distance_street, int atv1);
 bool compare_atv(const SSlot &a, const SSlot &b);
 bool compare_tv(const SSlot &a, const SSlot &b);
 

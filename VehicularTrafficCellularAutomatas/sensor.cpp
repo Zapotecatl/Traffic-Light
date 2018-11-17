@@ -1,14 +1,17 @@
 #include "sensor.h"
 
-
 STraditionalSensor **t_sensores;
 SDeliberativeSensors **d_sensores;
+SDistributedSensor **distributed_sensores;
 
 int *h_regionTraditionalSensors[2];
 int *v_regionTraditionalSensors[2];
 
 int *h_regionDeliberativeSensors[2];
 int *v_regionDeliberativeSensors[2];
+
+int *h_regionDistributedSensors[2];
+int *v_regionDistributedSensors[2];
 
 int stopped_distance;
 float precision_sensor;
@@ -35,14 +38,19 @@ void InializedSensors(int metodo_s, float precision, int distance_d, int distanc
 
     InializedTraditionalSensors(distance_d, distance_r, stopped_distance, distance_z);
     InializedDeliberativeSensors(distance_d, distance_r, stopped_distance, distance_z);
+    InializedDistributedSensors(distance_d, distance_r, distance_e, distance_z);
+
 }
 
 void FreeSensors()
 {
     freeTraditionalSensors();
     freeDeliberativeSensors();
+    freeDistributedSensors();
 }
 
+
+//Traditional sensors ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int allocateMemoryTraditionalSensors()
 {
     t_sensores = NULL;
@@ -208,100 +216,7 @@ void regionTraditionalSensores()
 
 }
 
-void FillVehicles(int n, int m, int x, int y)
-{
 
-    int i;
-
-    if (n % 2 == 0) {
-        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
-            VirtualVehicle veh;
-            if (x == 0) {
-                veh.position = d_hor_street - k - 1;
-                veh.direction = 'R';
-                veh.id = k;
-                veh.velocity = 0;
-
-                d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
-                i = localVirtualVehiclePosition('H', veh.direction,  n, m, veh.position);
-
-                SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
-            }
-            else {
-                veh.position = x - k - 1;
-                veh.direction = 'R';
-                veh.id = k;
-                veh.velocity = 0;
-
-                d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
-                i = localVirtualVehiclePosition('H', veh.direction, n, m, veh.position);
-
-                SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
-            }
-        }
-    }
-    else {
-        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
-            VirtualVehicle veh;
-
-            veh.position = x + k + 1;
-            veh.direction = 'L';
-            veh.id = k;
-            veh.velocity = 0;
-
-            d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
-            i = localVirtualVehiclePosition('H', veh.direction, n, m, veh.position);
-            SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
-        }
-    }
-
-    SwitchVirtualCellRW('H', n, m);
-
-    if (m % 2 == 0) {
-        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
-            VirtualVehicle veh;
-            if (y == 0) {
-                veh.position = d_ver_street - k - 1;
-                veh.direction = 'R';
-                veh.id = k;
-                veh.velocity = 0;
-
-                d_sensores[n][m].vertical.vehicles_read.push_back(veh);
-                i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
-
-                SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
-            }
-            else {
-                veh.position = y - k - 1;
-                veh.direction = 'R';
-                veh.id = k;
-                veh.velocity = 0;
-
-                d_sensores[n][m].vertical.vehicles_read.push_back(veh);
-                i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
-
-                SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
-            }
-        }
-    }
-    else {
-        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
-            VirtualVehicle veh;
-
-            veh.position = y + k + 1;
-            veh.direction = 'L';
-            veh.id = k;
-            veh.velocity = 0;
-
-            d_sensores[n][m].vertical.vehicles_read.push_back(veh);
-            i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
-            SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
-        }
-    }
-
-    SwitchVirtualCellRW('V', n, m);
-
-}
 
 int GetIndexTraditionalSensors(char type_street, char direction, int x)
 {
@@ -367,7 +282,7 @@ void traditionalSensing(int n, int m)
         }
 
         traffic_light_so[n][m].horizontal.n_sum_veh+= traffic_light_so[n][m].horizontal.n_vehicles;
-        traffic_light_so[n][m].horizontal.theta_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
+        traffic_light_so[n][m].horizontal.d_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
     }
     else{
 
@@ -385,7 +300,7 @@ void traditionalSensing(int n, int m)
         }
 
         traffic_light_so[n][m].horizontal.n_sum_veh+= traffic_light_so[n][m].horizontal.n_vehicles;
-        traffic_light_so[n][m].horizontal.theta_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
+        traffic_light_so[n][m].horizontal.d_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
     }
 
     //Verticales ///////////////////////////////////////////////////////////////////////////
@@ -422,8 +337,11 @@ void traditionalSensing(int n, int m)
             if (x > pos_t - distance_r)
                 traffic_light_so[n][m].vertical.m_vehicles+= value;
         }
+
+        //qDebug() << traffic_light_so[n][m].vertical.n_vehicles;
+
         traffic_light_so[n][m].vertical.n_sum_veh+= traffic_light_so[n][m].vertical.n_vehicles;
-        traffic_light_so[n][m].vertical.theta_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
+        traffic_light_so[n][m].vertical.d_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
 
     }
     else{
@@ -441,7 +359,7 @@ void traditionalSensing(int n, int m)
                 traffic_light_so[n][m].vertical.m_vehicles+= value;
         }
         traffic_light_so[n][m].vertical.n_sum_veh+= traffic_light_so[n][m].vertical.n_vehicles;
-        traffic_light_so[n][m].vertical.theta_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
+        traffic_light_so[n][m].vertical.d_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
     }
 }
 
@@ -558,42 +476,48 @@ void InializedTraditionalSensors(int distance_d, int distance_r, int distance_e,
 
 }
 
-bool determineVisible(char type_street, char direction, int x, bool prev_visible)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+bool determineVisible(char type_street, char direction, int x, int n, int m, bool prev_visible)
 {
 
-    bool visible = false;
+    bool visible = true;
     int k_intersection;
 
     if (metodo_sensado == 1) {
-
         k_intersection = GetIndexTraditionalSensors(type_street, direction, x);
 
-        if (k_intersection == INVALID) {//no esta en zona de sensado por lo que el estado por omision es true
-            visible = true;
-        }
-        else if (prev_visible != false) {
+        if (k_intersection != INVALID) {//esta en zona de sensado
 
-            if (frand() <= precision_sensor)
-                visible = true;
+            if (prev_visible == false)
+                visible = false;
+            else {
+                if (frand() <= precision_sensor)
+                    visible = true;
+                else
+                    visible = false;
+            }
         }
     }
     else {
 
-        k_intersection = GetIndexDeliberativeSensors(type_street, direction, x);
-
-        if (k_intersection == INVALID) //no esta en zona de sensado por lo que el estado por omision es true
-            visible = true;
-        else if (prev_visible != false) {
-
-            if (frand() <= precision_sensor)
-                visible = true;
+        int position = GetPositionSensedSensor(type_street, n, m);
+        if(position != INVALID){
+            if (prev_visible == false)
+                visible = false;
+            else {
+                if (frand() <= precision_sensor)
+                    visible = true;
+                else
+                    visible = false;
+            }
         }
+
+        SetVisibleSensedVehicle(type_street, n, m, visible);
     }
 
-    // qDebug() << new_visible;// << precision_sensor;
-
     return visible;
-
 }
 
 //Deliberative //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -707,8 +631,6 @@ void freeDeliberativeSensors()
 
 }
 
-
-
 void regionDeliberativeSensores()
 {
 
@@ -779,21 +701,15 @@ int GetIndexDeliberativeSensors(char type_street, int direction, int x)
 
 bool isThereVehicle(char type_street, int y, int x, int n, int m)
 {
-    if (type_street == 'H') {
-        if (GetValueCellStreet(type_street, y, x) >= 1) //Front vehicle
-            if (GetVisibleCellStreet(type_street, y, x) == true) //Simula errores de sensado
-                return true;
 
-        if (d_sensores[n][m].horizontal.sensed_vehicle.position != INVALID)
+    /*  if (GetValueCellStreet(type_street, y, x) >= 1 && GetVisibleCellStreet(type_street, y, x) == true){//Cuerpo del vehiculo detectado en la zona de deteccion
+        if (GetVisibleSensedVehicle(type_street, n, m) == true)//Simula errores de sensado
             return true;
-    }
-    else {
 
-        if (GetValueCellStreet(type_street, y, x) >= 1) //Front vehicle
-            if (GetVisibleCellStreet(type_street, y, x) == true) //Simula errores de sensado
-                return true;
+    }else */
 
-        if (d_sensores[n][m].vertical.sensed_vehicle.position != INVALID)
+    if (GetPositionSensedSensor(type_street, n, m) != INVALID){//Vehiculo detectado aunque no este en la zona de deteccion
+        if (GetVisibleSensedVehicle(type_street, n, m) == true)//Simula errores de sensado
             return true;
     }
 
@@ -1222,7 +1138,7 @@ void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m)
         traffic_light_so[n][m].horizontal.vehicle_stop = package2.stop;
 
         //Zapo semaforo
-        traffic_light_so[n][m].horizontal.theta_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
+        traffic_light_so[n][m].horizontal.d_vehicles = traffic_light_so[n][m].horizontal.n_vehicles;
         traffic_light_so[n][m].horizontal.z_vehicles = package2.n_z;
     }
     else {
@@ -1233,7 +1149,7 @@ void SendMessageFrontCT(char type_street, Package2 &package2, int n, int m)
         traffic_light_so[n][m].vertical.vehicle_stop = package2.stop;
 
         //Zapo semaforo
-        traffic_light_so[n][m].vertical.theta_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
+        traffic_light_so[n][m].vertical.d_vehicles = traffic_light_so[n][m].vertical.n_vehicles;
         traffic_light_so[n][m].vertical.z_vehicles = package2.n_z;
 
     }
@@ -1273,6 +1189,40 @@ int GetPositionSensor(char type_street, int n, int m)
 
     return pos;
 }
+
+int GetPositionSensedSensor(char type_street, int n, int m)
+{
+    int pos;
+
+    if (type_street == 'H')
+        pos = d_sensores[n][m].horizontal.sensed_vehicle.position;
+    else
+        pos = d_sensores[n][m].vertical.sensed_vehicle.position;
+
+    return pos;
+}
+
+
+void SetVisibleSensedVehicle(char type_street, int n, int m, bool visible)
+{
+
+    if (type_street == 'H')
+        d_sensores[n][m].horizontal.sensed_vehicle.visible = visible;
+    else
+        d_sensores[n][m].vertical.sensed_vehicle.visible = visible;
+
+}
+
+bool GetVisibleSensedVehicle(char type_street, int n, int m)
+{
+
+    if (type_street == 'H')
+        return d_sensores[n][m].horizontal.sensed_vehicle.visible;
+    else
+        return d_sensores[n][m].vertical.sensed_vehicle.visible;
+
+}
+
 
 char GetDirectionSensor(char type_street, int n, int m)
 {
@@ -1797,13 +1747,12 @@ int CalculateVirtualVelocityFrontSensor(char type_street, char direction, int n,
 #if 1
         if (stop_received == true) {
 
-            /*
-            pos_sensor = PositionFrontSensor(type_street, n, m);
+            /*int pos_sensor = PositionFrontSensor(type_street, n, m);
             int xl_sensor = localVirtualVehiclePosition(type_street, direction, n, m, pos_sensor);
-            dn = calculateDistance(xl_vehicle, xl_sensor, direction, d_side_block);*/
+            dn = calculateDistance(xl_vehicle, xl_sensor, direction, dis_block);*/
 
             if (direction == 'R')
-                dn =  (d_side_block - xl_vehicle) - 1;
+                dn =  (d_side_block - xl_vehicle);//) - 1;
             else
                 dn =  xl_vehicle;
 
@@ -1813,14 +1762,17 @@ int CalculateVirtualVelocityFrontSensor(char type_street, char direction, int n,
             }*/
 
             /*
-            if (n == 1 && m == 1 && type_street == 'H') {
+            if (n == 2 && m == 1 && type_street == 'H') {
                 // qDebug() << "LAIS: " << pos_inter << d_sensores[n][m].horizontal.position;
                 // qDebug() << "D: " << xl << dn << v << velocity << vp << rand() ;
-                qDebug() << "Aqui" << x << xl_vehicle << d_sensores[n][m].horizontal.position << dn;
+                //qDebug() << "Aqui" << pos_sensor << xl_sensor << x << xl_vehicle << d_sensores[n][m].horizontal.position << dn;
+
+                qDebug() << "Aqui" << xl_vehicle << xl_sensor << dn;
+
             }*/
 
             vn_light = CalculateVelocityLightLAI(dn, v);//vp es siempre 0 porque el semaforo tiene velocidad 0
-            velocity = min(vn_vehicle, vn_light);
+            velocity = minimum(vn_vehicle, vn_light);
         }
 
 #endif
@@ -1881,7 +1833,7 @@ int CalculateVirtualVelocity(char type_street, char direction, int n, int m, int
             int xl_light = localVirtualVehiclePosition(type_street, direction, n, m, pos_inter);
             dn = calculateDistance(xl_vehicle, xl_light, direction, d_side_block);
             vn_light = CalculateVelocityLightLAI(dn, v);//vp es siempre 0 porque el semaforo tiene velocidad 0
-            velocity = min(vn_vehicle, vn_light);
+            velocity = minimum(vn_vehicle, vn_light);
         }
     }
 
@@ -2520,7 +2472,7 @@ SResults2 countVirtualEnvironment(char type_street, int n, int m)
 
 }
 
-void resetDetectVehicle()
+void resetAllDetectVehicle()
 {
 
     int n, m;
@@ -2532,23 +2484,674 @@ void resetDetectVehicle()
             d_sensores[n][m].horizontal.sensed_vehicle.velocity = INVALID;
             d_sensores[n][m].horizontal.sensed_vehicle.position = INVALID;
             d_sensores[n][m].horizontal.sensed_vehicle.direction = INVALID;
+            d_sensores[n][m].horizontal.sensed_vehicle.visible = true;
 
             //No debes resetear el ID
             d_sensores[n][m].vertical.sensed_vehicle.velocity = INVALID;
             d_sensores[n][m].vertical.sensed_vehicle.position = INVALID;
             d_sensores[n][m].vertical.sensed_vehicle.direction = INVALID;
+            d_sensores[n][m].vertical.sensed_vehicle.visible = true;
 
         }
     }
 
 }
 
-void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int previous_x, int velocity, int distance_street, int id)
+void resetOneDetectVehicle(char type_street, int n, int m)
 {
 
+    if (type_street == 'H') {
+        //No debes resetear el ID
+        d_sensores[n][m].horizontal.sensed_vehicle.velocity = INVALID;
+        d_sensores[n][m].horizontal.sensed_vehicle.position = INVALID;
+        d_sensores[n][m].horizontal.sensed_vehicle.direction = INVALID;
+        d_sensores[n][m].horizontal.sensed_vehicle.visible = true;
+
+    } else {
+        //No debes resetear el ID
+        d_sensores[n][m].vertical.sensed_vehicle.velocity = INVALID;
+        d_sensores[n][m].vertical.sensed_vehicle.position = INVALID;
+        d_sensores[n][m].vertical.sensed_vehicle.direction = INVALID;
+        d_sensores[n][m].vertical.sensed_vehicle.visible = true;
+    }
+
+}
+
+
+void FillVehicles(int n, int m, int x, int y)
+{
+
+    int i;
+
+    if (n % 2 == 0) {
+        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
+            VirtualVehicle veh;
+            if (x == 0) {
+                veh.position = d_hor_street - k - 1;
+                veh.direction = 'R';
+                veh.id = k;
+                veh.velocity = 0;
+
+                d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
+                i = localVirtualVehiclePosition('H', veh.direction,  n, m, veh.position);
+
+                SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
+            }
+            else {
+                veh.position = x - k - 1;
+                veh.direction = 'R';
+                veh.id = k;
+                veh.velocity = 0;
+
+                d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
+                i = localVirtualVehiclePosition('H', veh.direction, n, m, veh.position);
+
+                SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
+            }
+        }
+    }
+    else {
+        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
+            VirtualVehicle veh;
+
+            veh.position = x + k + 1;
+            veh.direction = 'L';
+            veh.id = k;
+            veh.velocity = 0;
+
+            d_sensores[n][m].horizontal.vehicles_read.push_back(veh);
+            i = localVirtualVehiclePosition('H', veh.direction, n, m, veh.position);
+            SetVirtualVehicleCell('H', veh.direction, n, m, i, 0);
+        }
+    }
+
+    SwitchVirtualCellRW('H', n, m);
+
+    if (m % 2 == 0) {
+        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
+            VirtualVehicle veh;
+            if (y == 0) {
+                veh.position = d_ver_street - k - 1;
+                veh.direction = 'R';
+                veh.id = k;
+                veh.velocity = 0;
+
+                d_sensores[n][m].vertical.vehicles_read.push_back(veh);
+                i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
+
+                SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
+            }
+            else {
+                veh.position = y - k - 1;
+                veh.direction = 'R';
+                veh.id = k;
+                veh.velocity = 0;
+
+                d_sensores[n][m].vertical.vehicles_read.push_back(veh);
+                i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
+
+                SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
+            }
+        }
+    }
+    else {
+        for (int k = 0; k < d_side_block / SPLIT_BLOCK; k+=ls) {
+            VirtualVehicle veh;
+
+            veh.position = y + k + 1;
+            veh.direction = 'L';
+            veh.id = k;
+            veh.velocity = 0;
+
+            d_sensores[n][m].vertical.vehicles_read.push_back(veh);
+            i = localVirtualVehiclePosition('V', veh.direction, n, m, veh.position);
+            SetVirtualVehicleCell('V', veh.direction, n, m, i, 0);
+        }
+    }
+
+    SwitchVirtualCellRW('V', n, m);
+
+}
+
+void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int current_rear_x, int previous_x, int velocity, int distance_street, int id)
+{
+
+    int x, y;
+
     if (metodo_sensado == 2) {
-        if (model == 1) {
-            int x, y;
+        if (type_street == 'H'){
+            x = GetPositionSensor('H', n, m);
+
+            if (direction == 'R') {
+                if ((x >= current_rear_x && x <= current_x) || (x > previous_x && x < current_rear_x)){
+                    d_sensores[n][m].horizontal.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].horizontal.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].horizontal.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].horizontal.sensed_vehicle.id = id;
+                }
+            }
+            else {
+                if ((x <= current_rear_x && x >= current_x) || (x < previous_x && x > current_rear_x)){
+                    d_sensores[n][m].horizontal.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].horizontal.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].horizontal.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].horizontal.sensed_vehicle.id = id;
+                }
+            }
+        }
+        else {
+            x = GetPositionSensor('V', n, m);
+
+            if (direction == 'R') {
+                if ((x >= current_rear_x && x <= current_x) || (x > previous_x && x < current_rear_x)){
+                    d_sensores[n][m].vertical.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].vertical.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].vertical.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].vertical.sensed_vehicle.id = id;
+                }
+            }
+            else {
+                if ((x <= current_rear_x && x >= current_x) || (x < previous_x && x > current_rear_x)){
+                    d_sensores[n][m].vertical.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].vertical.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].vertical.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].vertical.sensed_vehicle.id = id;
+                }
+            }
+        }
+    }
+
+}
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+void InializedDistributedSensors(int distance_d, int distance_r, int distance_e, int distance_z)
+{
+    int n, m;
+    int x;
+    int y;
+
+    if (!(distance_d >= 0 && distance_d <= d_side_block)) {
+        qDebug() << "ERROR: d_side_block" << __PRETTY_FUNCTION__;
+        distance_d = d_side_block;
+    }
+
+    if (!(distance_r >= 0 && distance_r <= distance_d)) {
+        qDebug() << "ERROR: distance_r" << __PRETTY_FUNCTION__;
+        distance_r = distance_d;
+    }
+
+    if (!(distance_e >= 0 && distance_e <= d_side_block - (ls - 1))){
+        qDebug() << "ERROR: distance_e" << __PRETTY_FUNCTION__;
+        //distance_e = d_side_block - (ls - 1);
+        distance_e = 0;
+    }
+
+    if (!(distance_z >= 0 && distance_z <= distance_e)){
+        qDebug() << "ERROR: distance_z" << __PRETTY_FUNCTION__;
+        distance_z = distance_e;
+    }
+
+    allocateMemoryDistributedSensors();
+
+    for (n = 0; n < n_hor_streets; n++){
+        for (m = 0; m < m_ver_streets; m++){
+
+            x = m * d_side_block + m;
+            y = n * d_side_block + n;
+
+            distributed_sensores[n][m].horizontal.position = GetPositionTrafficLightSO('H', n, m);
+            distributed_sensores[n][m].vertical.position = GetPositionTrafficLightSO('V', n, m);
+
+            distributed_sensores[n][m].horizontal.distance_d = distance_d;
+            distributed_sensores[n][m].vertical.distance_d = distance_d;
+
+            distributed_sensores[n][m].horizontal.distance_r = distance_r;
+            distributed_sensores[n][m].vertical.distance_r = distance_r;
+
+            distributed_sensores[n][m].horizontal.distance_e = distance_e;
+            distributed_sensores[n][m].vertical.distance_e = distance_e;
+
+            if (n % 2 == 0) {
+
+                distributed_sensores[n][m].horizontal.direction = 'R';
+
+                if (x == 0) {
+                    distributed_sensores[n][m].horizontal.start = d_hor_street - distance_d;
+                    distributed_sensores[n][m].horizontal.end = distance_e;
+                }
+                else {
+                    distributed_sensores[n][m].horizontal.start = x - distance_d;
+                    distributed_sensores[n][m].horizontal.end = x + distance_e;
+                }
+            }
+            else {
+                distributed_sensores[n][m].horizontal.direction = 'L';
+
+                if (x == 0) {
+                    distributed_sensores[n][m].horizontal.start = distance_d;
+                    distributed_sensores[n][m].horizontal.end = d_hor_street - distance_e;
+                }
+                else {
+                    distributed_sensores[n][m].horizontal.start = x + distance_d;
+                    distributed_sensores[n][m].horizontal.end = x - distance_e;
+                }
+            }
+
+            if (m % 2 == 0) {
+                distributed_sensores[n][m].vertical.direction = 'R';
+
+                if (y == 0) {
+                    distributed_sensores[n][m].vertical.start = d_ver_street - distance_d;
+                    distributed_sensores[n][m].vertical.end = distance_e;
+                }
+                else {
+                    distributed_sensores[n][m].vertical.start = y - distance_d;
+                    distributed_sensores[n][m].vertical.end = y + distance_e;
+                }
+            }
+            else {
+                distributed_sensores[n][m].vertical.direction = 'L';
+
+                if (y == 0) {
+                    distributed_sensores[n][m].vertical.start = distance_d;
+                    distributed_sensores[n][m].vertical.end = d_ver_street - distance_e;
+                }
+                else {
+                    distributed_sensores[n][m].vertical.start = y + distance_d;
+                    distributed_sensores[n][m].vertical.end = y - distance_e;
+                }
+            }
+        }
+    }
+
+    regionDistributedSensores();
+
+}
+
+int allocateMemoryDistributedSensors()
+{
+    distributed_sensores = NULL;
+
+    h_regionDistributedSensors[0] = NULL;
+    h_regionDistributedSensors[1] = NULL;
+
+    v_regionDistributedSensors[0] = NULL;
+    v_regionDistributedSensors[1] = NULL;
+
+    distributed_sensores = new SDistributedSensor*[n_hor_streets];
+    for (int i = 0; i < n_hor_streets; i++)
+        distributed_sensores[i] = new SDistributedSensor[m_ver_streets];
+
+    h_regionDistributedSensors[0] = new int[d_hor_street];
+    h_regionDistributedSensors[1] = new int[d_hor_street];
+
+    v_regionDistributedSensors[0] = new int[d_ver_street];
+    v_regionDistributedSensors[1] = new int[d_ver_street];
+
+    return 0;
+}
+
+void freeDistributedSensors()
+{
+    if (v_regionDistributedSensors[0] != NULL){
+        delete [] v_regionDistributedSensors[0];
+        v_regionDistributedSensors[0] = NULL;
+    }
+
+    if (v_regionDistributedSensors[1] != NULL){
+        delete [] v_regionDistributedSensors[1];
+        v_regionDistributedSensors[1] = NULL;
+    }
+
+    if (h_regionDistributedSensors[0] != NULL){
+        delete [] h_regionDistributedSensors[0];
+        h_regionDistributedSensors[0] = NULL;
+    }
+
+    if (h_regionDistributedSensors[1] != NULL){
+        delete [] h_regionDistributedSensors[1];
+        h_regionDistributedSensors[1] = NULL;
+    }
+
+    if (distributed_sensores != NULL){
+        for (int i = 0; i < n_hor_streets; i++)
+            delete [] distributed_sensores[i];
+        delete [] distributed_sensores;
+        distributed_sensores = NULL;
+    }
+
+}
+
+void regionDistributedSensores()
+{
+
+    //Create region for each traffic light
+    int k, i, m, n;
+
+    for (k = 0; k < 2; k++){
+
+        for (i = 0; i < d_hor_street; i++)
+            h_regionDistributedSensors[k][i] = -1;
+
+        for (i = 0; i < d_ver_street; i++)
+            v_regionDistributedSensors[k][i] = -1;
+    }
+
+    int limit_n = n_hor_streets > 1 ? 2 : 1;
+
+    for (n = 0; n < limit_n; n++){
+        for (m = 0; m < m_ver_streets; m++){
+
+            if (distributed_sensores[n][m].horizontal.direction == 'R') {
+
+                if (m == 0) {
+                    for (i = distributed_sensores[n][m].horizontal.start; i < d_hor_street; i++)
+                        h_regionDistributedSensors[n][i] = m;
+
+                    for (i = 0; i <= distributed_sensores[n][m].horizontal.end; i++)
+                        h_regionDistributedSensors[n][i] = m;
+                }
+                else {
+                    for (i = distributed_sensores[n][m].horizontal.start; i <= distributed_sensores[n][m].horizontal.end; i++)
+                        h_regionDistributedSensors[n][i] = m;
+                }
+            }
+            else {
+
+                if (m == 0) {
+
+                    for (i = distributed_sensores[n][m].horizontal.start; i >= 0; i--)
+                        h_regionDistributedSensors[n][i] = m;
+
+                    for (i =  d_hor_street - 1; i >= distributed_sensores[n][m].horizontal.end; i--)
+                        h_regionDistributedSensors[n][i] = m;
+
+                }
+                else {
+                    for (i = distributed_sensores[n][m].horizontal.start; i >= distributed_sensores[n][m].horizontal.end; i--)
+                        h_regionDistributedSensors[n][i] = m;
+                }
+            }
+        }
+    }
+
+    int limit_m = m_ver_streets > 1 ? 2 : 1;
+
+    for (m = 0; m < limit_m; m++) {
+        for (n = 0; n < n_hor_streets; n++) {
+
+            if (distributed_sensores[n][m].vertical.direction == 'R') {
+
+                if (n == 0) {
+                    for (i = distributed_sensores[n][m].vertical.start; i < d_ver_street; i++)
+                        v_regionDistributedSensors[m][i] = n;
+
+                    for (i = 0; i <= distributed_sensores[n][m].vertical.end; i++)
+                        v_regionDistributedSensors[m][i] = n;
+                }
+                else {
+                    for (i = distributed_sensores[n][m].vertical.start; i <= distributed_sensores[n][m].vertical.end; i++)
+                        v_regionDistributedSensors[m][i] = n;
+                }
+            }
+            else {
+
+                if (n == 0) {
+
+                    for (i = distributed_sensores[n][m].vertical.start; i >= 0; i--)
+                        v_regionDistributedSensors[m][i] = n;
+
+
+                    for (i = d_ver_street - 1; i >= distributed_sensores[n][m].vertical.end; i--)
+                        v_regionDistributedSensors[m][i] = n;
+
+                }
+                else {
+                    for (i = distributed_sensores[n][m].vertical.start; i >= distributed_sensores[n][m].vertical.end; i--)
+                        v_regionDistributedSensors[m][i] = n;
+                }
+            }
+        }
+    }
+
+
+    /*
+    for (k = 0; k < 2; k++){
+       for (i = 0; i < d_hor_street; i++)
+            qDebug() << h_regionSensoresT[k][i];
+         qDebug() << endl;
+
+        for (i = 0; i < d_ver_street; i++)
+            qDebug() << v_regionSensoresT[k][i];
+
+        qDebug() << endl;
+
+    }
+    */
+
+}
+
+int GetIndexDistributedSensors(char type_street, char direction, int x)
+{
+    if (type_street == 'H') {
+        if (direction == 'R')
+            return h_regionDistributedSensors[0][x];
+        else
+            return h_regionDistributedSensors[1][x];
+    }
+    else {
+        if (direction == 'R')
+            return v_regionDistributedSensors[0][x];
+        else
+            return v_regionDistributedSensors[1][x];
+    }
+
+    return INVALID;//INVALID significa que no esta en un area de sensado
+}
+
+int searchDistanceLeaderVehicle(char type_street, char direction, int n, int m)
+{
+
+    int pos;
+    int pos_before_intersection = GetPositionDistributedControl(type_street, n, m);
+    int num_intersections;
+    int y;
+
+    if (type_street == 'H') {
+        y = n;
+        num_intersections = m_ver_streets;
+    }
+    else {
+        y = m;
+        num_intersections = n_hor_streets;
+    }
+
+    if (num_intersections > 1) {
+        if (direction == 'R') {
+            for (int dis = 0; dis < d_side_block; dis++){
+                pos = pos_before_intersection - dis;
+                if (GetValueCellStreet(type_street, y, pos) == 1){
+                    return dis;
+                }
+            }
+        }else {
+            for (int dis = 0; dis < d_side_block; dis++){
+                pos = pos_before_intersection + dis;
+                if (GetValueCellStreet(type_street, y, pos) == 1){
+                    return dis;
+                }
+            }
+        }
+    }
+
+
+    return INVALID;
+}
+
+void DistributedSensing(int n, int m)
+{
+    int x;
+    char direction;
+    int value;
+    int pos_t;
+    int distance_e;
+    int distance_d;
+    int distance_r;
+
+    //Horizontales ///////////////////////////////////////////////////////////////////////////
+    distributed_control[n][m].horizontal.n_vehicles = 0;
+    distributed_control[n][m].horizontal.m_vehicles = 0;
+    distributed_control[n][m].horizontal.vehicle_stop = false;
+
+    direction = (n % 2) == 0 ? 'R' : 'L';
+
+    bool there_is_leader_h = false;
+    int distance_leader_h = searchDistanceLeaderVehicle('H', direction, n, m);
+
+    if (distance_leader_h != INVALID && distance_leader_h <= distributed_sensores[n][m].horizontal.distance_d / 2){
+        there_is_leader_h = true;
+    }
+
+    if (there_is_leader_h == true){
+
+        pos_t = distributed_sensores[n][m].horizontal.position;
+
+        distance_d = distance_leader_h + (distributed_sensores[n][m].horizontal.distance_d / 2);
+        distance_r = distributed_sensores[n][m].horizontal.distance_r;
+
+        distance_e = (distributed_sensores[n][m].horizontal.distance_d / 2) - distance_leader_h;
+        if (distance_e > distributed_sensores[n][m].horizontal.distance_e)
+            distance_e = distributed_sensores[n][m].horizontal.distance_e;
+
+        distributed_control[n][m].horizontal.vehicle_stop = VehiclesStoppedDistance_e('H', n, m, distance_e);
+
+        //if (n == 0 && m == 0)
+        //qDebug() << "EH: " << traffic_light_so[n][m].horizontal.e_vehicles;
+
+        if (direction == 'R'){
+
+            for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
+                //Regla 1 y 3
+                value = 0;
+                if (GetValueCellStreet('H', n, x) == 1) //Front vehicle
+                    if (GetVisibleCellStreet('H', n, x) == true)
+                        value = 1;
+
+                distributed_control[n][m].horizontal.n_vehicles+=value;
+
+                if (x > pos_t - distance_r)
+                    distributed_control[n][m].horizontal.m_vehicles+= value;
+            }
+
+            distributed_control[n][m].horizontal.n_sum_veh+= distributed_control[n][m].horizontal.n_vehicles;
+        }
+        else{
+
+            for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
+                //Regla 1 y 3
+                value = 0;
+                if (GetValueCellStreet('H', n, x) == 1) //Front vehicle
+                    if (GetVisibleCellStreet('H', n, x) == true)
+                        value = 1;
+
+                distributed_control[n][m].horizontal.n_vehicles+=value;
+
+                if (x <= pos_t + distance_r)
+                    distributed_control[n][m].horizontal.m_vehicles+= value;
+            }
+
+            distributed_control[n][m].horizontal.n_sum_veh+= distributed_control[n][m].horizontal.n_vehicles;
+        }
+    }
+    else
+        distributed_control[n][m].horizontal.n_sum_veh = 0;
+
+    //Verticales ///////////////////////////////////////////////////////////////////////////
+
+    distributed_control[n][m].vertical.n_vehicles = 0;
+    distributed_control[n][m].vertical.m_vehicles = 0;
+    distributed_control[n][m].vertical.vehicle_stop = false;
+
+    direction = (m % 2) == 0 ? 'R' : 'L';
+
+    bool there_is_leader_v = false;
+    int distance_leader_v = searchDistanceLeaderVehicle('V', direction, n, m);
+
+    if (distance_leader_v != INVALID && distance_leader_v <= distributed_sensores[n][m].vertical.distance_d / 2){
+        there_is_leader_v = true;
+    }
+
+    if (there_is_leader_v == true){
+
+        pos_t = distributed_sensores[n][m].vertical.position;
+
+        distance_d = distance_leader_v + (distributed_sensores[n][m].vertical.distance_d / 2);
+        distance_r = distributed_sensores[n][m].vertical.distance_r;
+
+        distance_e = (distributed_sensores[n][m].vertical.distance_d / 2) - distance_leader_v;
+        if (distance_e > distributed_sensores[n][m].vertical.distance_e)
+            distance_e = distributed_sensores[n][m].vertical.distance_e;
+
+        distributed_control[n][m].vertical.vehicle_stop = VehiclesStoppedDistance_e('V', n, m, distance_e);
+
+        //qDebug() << "EV: " << v_traffic_light_so[m][n].e_vehicles;
+
+        if (direction == 'R'){
+
+            for (x = (pos_t - distance_d) + 1; x <= pos_t; x++){
+                //Regla 1 y 3
+
+                value = 0;
+                if (GetValueCellStreet('V', m, x) == 1)//Front vehicle
+                    if (GetVisibleCellStreet('V', m, x) == true)
+                        value = 1;
+
+                distributed_control[n][m].vertical.n_vehicles+=value;
+
+                if (x > pos_t - distance_r)
+                    distributed_control[n][m].vertical.m_vehicles+= value;
+            }
+            distributed_control[n][m].vertical.n_sum_veh+= distributed_control[n][m].vertical.n_vehicles;
+
+        }
+        else{
+
+            for (x = (pos_t + distance_d) - 1; x >= pos_t; x--){
+                //Regla 1 y 3
+                value = 0;
+                if (GetValueCellStreet('V', m, x) == 1)//Front vehicle
+                    if (GetVisibleCellStreet('V', m, x) == true)
+                        value = 1;
+
+                distributed_control[n][m].vertical.n_vehicles+=value;
+
+                if (x <= pos_t + distance_r)
+                    distributed_control[n][m].vertical.m_vehicles+= value;
+            }
+            distributed_control[n][m].vertical.n_sum_veh+= distributed_control[n][m].vertical.n_vehicles;
+        }
+    }
+    else
+        distributed_control[n][m].vertical.n_sum_veh = 0;
+
+
+}
+
+#if 0
+
+void DetectVehicle(char type_street, char direction, int n, int m, int current_x, int current_rear_x, int previous_x, int velocity, int distance_street, int id)
+{
+
+    int x, y;
+
+    if (metodo_sensado == 2) {
+
+        /*if (model == 1) {
+
             if (type_street == 'H') {
                 y = n;
                 x = GetPositionSensor('H', n, m);
@@ -2570,23 +3173,43 @@ void DetectVehicle(char type_street, char direction, int n, int m, int current_x
                 }
             }
         }
-        else {
+        else {*/
 
-            if (type_street == 'H'){
-                if (d_sensores[n][m].horizontal.sensed_vehicle.id != id) {//OJO, si es un solo vehiculo ya no lo captara posteriormente, no importa porque no es un caso importante, lo importante es no repetir eventos
 
+
+        if (type_street == 'H'){
+            x = GetPositionSensor('H', n, m);
+
+            if (direction == 'R') {
+                if ((x >= current_rear_x && x <= current_x) || (x > previous_x && x < current_rear_x)){
+                    d_sensores[n][m].horizontal.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].horizontal.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].horizontal.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].horizontal.sensed_vehicle.id = id;
+                }
+            }
+            else {
+                if ((x <= current_rear_x && x >= current_x) || (x < previous_x && x > current_rear_x)){
+                    d_sensores[n][m].horizontal.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].horizontal.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].horizontal.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].horizontal.sensed_vehicle.id = id;
+                }
+            }
+
+
+            //if (d_sensores[n][m].horizontal.sensed_vehicle.id != id) {//OJO, si es un solo vehiculo ya no lo captara posteriormente, no importa porque no es un caso importante, lo importante es no repetir eventos
+            /*if (previous_x != x) {
                     int dis_sensor = calculateDistance(d_sensores[n][m].horizontal.position, current_x, direction, distance_street);
-
                     if (dis_sensor < d_side_block - 1){//solo interesa los vehiculos que cruzan el sensor
-                        //  qDebug() << direction << d_sensores[n][m].horizontal.position << current_x << dis_sensor;
                         int dis_previous = calculateDistance(previous_x, current_x, direction, distance_street);
-
+                        //  qDebug() << direction << d_sensores[n][m].horizontal.position << current_x << dis_sensor;
                         if (dis_previous < vmax) {
                             // qDebug() << direction <<  previous_x << current_x << dis_previous;// << rand();
                             if (dis_previous >= dis_sensor){
 
-                                //if (n == 1 && m == 1 && type_street == 'H')
-                                //  qDebug() << "Sensado en estructura: " << "curr_x:" << current_x << "velocity:" << velocity << "id:" << id;// << n << m;
+                                //if (n == 3 && m == 1 && type_street == 'H')
+                                //qDebug() << "Sensado en estructura: " << "curr_x:" << current_x << "velocity:" << velocity << "id:" << id;// << n << m;
 
                                 d_sensores[n][m].horizontal.sensed_vehicle.velocity = velocity;
                                 d_sensores[n][m].horizontal.sensed_vehicle.position = current_x;
@@ -2595,18 +3218,40 @@ void DetectVehicle(char type_street, char direction, int n, int m, int current_x
                             }
                         }
                     }
+                }*/
+
+
+        }
+        else {
+
+            x = GetPositionSensor('V', n, m);
+
+            if (direction == 'R') {
+                if ((x >= current_rear_x && x <= current_x) || (x > previous_x && x < current_rear_x)){
+                    d_sensores[n][m].vertical.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].vertical.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].vertical.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].vertical.sensed_vehicle.id = id;
                 }
             }
             else {
+                if ((x <= current_rear_x && x >= current_x) || (x < previous_x && x > current_rear_x)){
+                    d_sensores[n][m].vertical.sensed_vehicle.velocity = velocity;
+                    d_sensores[n][m].vertical.sensed_vehicle.position = current_x;
+                    d_sensores[n][m].vertical.sensed_vehicle.direction = direction;
+                    d_sensores[n][m].vertical.sensed_vehicle.id = id;
+                }
+            }
 
-                if (d_sensores[n][m].vertical.sensed_vehicle.id != id) {
 
+            /*
+                //if (d_sensores[n][m].vertical.sensed_vehicle.id != id) {
+                x = GetPositionSensor('V', n, m);
+                if (previous_x != x) {
                     int dis_sensor = calculateDistance(d_sensores[n][m].vertical.position, current_x, direction, distance_street);
-
                     if (dis_sensor < d_side_block - 1){//solo interesa los vehiculos que cruzan el sensor
-                        //       qDebug() << direction << d_sensores[n][m].vertical.position << current_x << dis_sensor;
                         int dis_previous = calculateDistance(previous_x, current_x, direction, distance_street);
-
+                        //       qDebug() << direction << d_sensores[n][m].vertical.position << current_x << dis_sensor;
                         if (dis_previous < vmax) {
                             // qDebug() << direction <<  previous_x << current_x << dis_previous;// << rand();
                             if (dis_previous >= dis_sensor){
@@ -2617,10 +3262,11 @@ void DetectVehicle(char type_street, char direction, int n, int m, int current_x
                             }
                         }
                     }
-                }
-            }
+                }*/
+            //}
         }
     }
 
 }
 
+#endif

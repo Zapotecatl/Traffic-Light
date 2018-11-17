@@ -594,6 +594,7 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
     char type_street = pr_vehicles[id].type_street;
     char direction = pr_vehicles[id].direction;
     int previous_x = pr_vehicles[id].previous_position;
+    int rear_x = pr_vehicles[id].rear_position;
     int velocity;
 
     if (model == 1) {
@@ -607,7 +608,7 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
         else if (intersection_control == 2 || intersection_control == 3) {
 
             if (metodo_sensado == 2)
-                DetectVehicle(type_street, direction, n, m, x, previous_x, v, d_street, id);
+                DetectVehicle(type_street, direction, n, m, x, rear_x, previous_x, v, d_street, id);
 
             state_light = GetValueTrafficLightSO(type_street, n, m);
             pos_light = GetPositionTrafficLightSO(type_street, n, m);
@@ -616,6 +617,11 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
             state_light = GetValueSlotBasedSystem(type_street, n, m, id);
             pos_light = GetPositionDirectionSlotSystem(type_street, n, m);
         }
+        else if (intersection_control == 5) {
+            state_light = GetValueDistributedControl(type_street, n, m);
+            pos_light = GetPositionDistributedControl(type_street, n, m);
+        }
+
 
         //state_light = 1;
         //184
@@ -638,7 +644,7 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
         else if (intersection_control == 2 || intersection_control == 3) {
 
             if (metodo_sensado == 2)
-                DetectVehicle(type_street, direction, n, m, x, previous_x, v, d_street, id);
+                DetectVehicle(type_street, direction, n, m, x, rear_x, previous_x, v, d_street, id);
 
             state_light = GetValueTrafficLightSO(type_street, n, m);
             pos_inter = GetPositionIntersectionTrafficLightSO(type_street, n, m);
@@ -647,6 +653,52 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
             state_light = GetValueSlotBasedSystem(type_street, n, m, id);
             pos_inter = GetPositionIntersectionSlotSystem(type_street, n, m);
         }
+        else if (intersection_control == 5) {
+
+            state_light = GetValueDistributedControl(type_street, n, m);
+
+            int pos_sensor;
+            int pos_before_intersection;
+
+            if (type_street == 'H') {
+                pos_sensor = distributed_control[n][m].horizontal.pos_intersection;
+                pos_before_intersection = distributed_control[n][m].horizontal.position;
+            }
+            else {
+                pos_sensor = distributed_control[n][m].vertical.pos_intersection;
+                pos_before_intersection = distributed_control[n][m].vertical.position;
+            }
+
+            //Monitorear si cruzo la interseecion
+            SensorDetectsVehicle(type_street, direction, n, m, x, rear_x, previous_x, v, pos_sensor, id);
+
+            if (pr_vehicles[id].failure == true) {
+                state_light = 0;
+
+                if (v == 0 && pos_before_intersection == x) {
+
+                    if (type_street == 'H') {
+                        if (distributed_control[n][m].horizontal.light == 1) {
+                            state_light = 1;
+                            distributed_control[n][m].horizontal.failure_wait = false;
+                        }
+                        else
+                            distributed_control[n][m].horizontal.failure_wait = true;
+                    }
+                    else {
+                        if (distributed_control[n][m].vertical.light == 1){
+                            state_light = 1;
+                            distributed_control[n][m].vertical.failure_wait = false;
+                        }
+                        else
+                            distributed_control[n][m].vertical.failure_wait = true;
+                    }
+                }
+            }
+
+            pos_inter = GetPositionIntersectionDistributedControl(type_street, n, m);
+        }
+
 
         //LAI
         if (GetAutonomousVehicle(id) != true)
@@ -668,7 +720,7 @@ int CalculateVelocity(unsigned int dn, int vp, int n, int m, int d_street, int i
             else
                 vn_light = CalculateVelocityAutonomousLightLAI(dn, v);
 
-            velocity = min(vn_vehicle, vn_light);
+            velocity = minimum(vn_vehicle, vn_light);
         }
     }
 
